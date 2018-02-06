@@ -5,5 +5,5 @@
 #include <string>
 
 void readInput(std::string filename);
-
+void writeBinary();
 #endif
