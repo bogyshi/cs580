@@ -1,0 +1,5 @@
+#!/bin/sh
+
+#SBATCH --nodes=1 --partition=Standard --cpus-per-task=1 --job-name="runinLikeTimHung" --output=hello.txt --time=5 --mail-user=avanroi1@binghamton.edu --mail-type=end
+
+srun ./exec

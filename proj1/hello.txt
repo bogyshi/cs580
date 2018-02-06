@@ -1,0 +1,1 @@
+Insufficient arguments, enter the following "num_cores input_file queries_file results_file"Header: 1234 100 4
