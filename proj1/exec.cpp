@@ -11,6 +11,6 @@ int main(int argc, char ** argv)
   {
     std::cerr<<"Insufficient arguments, enter the following \"num_cores input_file queries_file results_file\"";
   }
-  writeBinary();
+  writeBinary("test");
   readInput(argv[2]);
 }

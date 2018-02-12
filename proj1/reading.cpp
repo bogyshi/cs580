@@ -4,7 +4,7 @@ using namespace std;
 
 void readInput(string filename)
 {
-  ifstream file ("test", ios::in|ios::binary);
+  ifstream file (filename, ios::in|ios::binary);
   uint64_t ID;
   file.read(reinterpret_cast<char *>(&ID),sizeof(ID));
   uint64_t numEntries;
@@ -15,22 +15,23 @@ void readInput(string filename)
   uint32_t z1;
   uint32_t y1;
   uint32_t w1;
+  printf("Header: %lu %lu %lu\n",ID,numEntries,numDim);
   while(!file.eof())
   {
-    uint32_t x1 = 1;
+    x1 = 1;
     file.read(reinterpret_cast<char *>(&x1),sizeof(x1));
-    uint32_t y1 = 2;
+    y1 = 2;
     file.read(reinterpret_cast<char *>(&y1),sizeof(y1));
-    uint32_t z1 = 3;
+    z1 = 3;
     file.read(reinterpret_cast<char *>(&z1),sizeof(z1));
-    uint32_t w1 = 4;
+    w1 = 4;
     file.read(reinterpret_cast<char *>(&w1),sizeof(w1));
+    printf("Point: %u %u %u %u\n",x1,y1,z1,w1);
   }
 
-  printf("Header: %lu %lu %lu",ID,numEntries,numDim);
 }
 
-void writeBinary()
+void writeBinary(string filename)
 {
   ofstream file;
   uint64_t ID = 1234;
@@ -40,7 +41,7 @@ void writeBinary()
   uint32_t y1 = 2;
   uint32_t z1 = 3;
   uint32_t w1 = 4;
-  file.open("test",ios::out|ios::binary);
+  file.open(filename,ios::out|ios::binary);
   file.write((char *) &ID,sizeof(ID));
   file.write((char *) &numEntries,sizeof(numEntries));
   file.write((char *) &numDim,sizeof(numDim));

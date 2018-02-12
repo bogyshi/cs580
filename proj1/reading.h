@@ -5,5 +5,7 @@
 #include <string>
 
 void readInput(std::string filename);
-void writeBinary();
+void readQueries(std::string filename);
+void writeResults(std::string filename);
+void writeBinary(std::string filename);
 #endif
