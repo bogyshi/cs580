@@ -2,20 +2,24 @@
 all: exec
 
 .PHONY: exec
-exec: exec.o reading.o
-	g++ -std=c++11 -o exec exec.o reading.o
+exec: exec.o reading.o point.o
+	g++ -std=c++11 -g -o exec exec.o reading.o point.o
+
+.PHONY: point.o
+point.o: point.h
+	g++ -std=c++11 -g -c -o point.o point.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align
 
 .PHONY: KDTree.o
 KDTree.o: KDTree.h
-	g++ -std=c++11 -c -o KDTree.o KDTree.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align
+	g++ -std=c++11 -g -c -o KDTree.o KDTree.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align
 
 .PHONY: reading.o
-reading.o: reading.h KDTree.h
-	g++ -std=c++11 -c -o reading.o reading.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align
+reading.o: reading.h KDTree.h point.h
+	g++ -std=c++11 -g -c -o reading.o reading.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align
 
 .PHONY: exec.o
-exec.o: reading.h
-	g++ -std=c++11 -c -o exec.o exec.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align
+exec.o: reading.h point.h
+	g++ -std=c++11 -g -c -o exec.o exec.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align
 
 .PHONY: clean
 clean:
