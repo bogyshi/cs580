@@ -16,6 +16,6 @@ int main(int argc, char ** argv)
   uint64_t n_cores;
   n_cores = atoi(argv[1]);
   readInput(argv[2],n_cores);
-  readQueries(argv[3]);
+  readQueries(argv[3],n_cores);
   writeResults(argv[4]);
 }

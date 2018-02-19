@@ -27,27 +27,7 @@ void readInput(string filename,const uint64_t numCores)
   uint64_t numDim;
   file.read(reinterpret_cast<char *>(&numDim),sizeof(numDim));
   printf("Header: %s %lu %lu %lu\n",type,inputID,numEntries,numDim);
-  static char inputFileoffset = 32;//this is to let us seek past the pointless stuff in the beginning
-  uint64_t numPoints = numEntries/numCores;
-  uint64_t offsetData = numPoints*4*numDim;//4 is the size for each 32 bit in a points value, times the number of dimensions
-  thread readers[numCores];
-  uint64_t numThreads = 0;
-  if(debug == 0){
-    printf("Using %lu threads, we assign each thread %lu points, leaving the last thread with %lu entries.\n",numCores,numPoints, numEntries-numPoints*(numCores-1));
-  }
-  while(numThreads<numCores-1)//leave remaining points to last thread
-  {
-    readers[numThreads]= thread(readPoints,inputFileoffset+numThreads*offsetData,numPoints);
-    numThreads++;
-  }
-  readers[numThreads]=thread(readPoints,inputFileoffset+numThreads*offsetData,numEntries-numPoints*numThreads);//these are the remaining points
-
-  numThreads=0;
-  while (numThreads<numCores)
-  {
-    readers[numThreads].join();
-    numThreads++;
-  }
+  
   //uint32_t test;
   //file.read(reinterpret_cast<char *>(&test),sizeof(&test));
   //printf("first: %u\n",test);
@@ -61,7 +41,7 @@ void readInput(string filename,const uint64_t numCores)
       break;
     }
     points.push_back((point(numDim,vals))); //IS THIS ALLOWED?!??!?!?!!?
-    //printf("Point: %u %u\n",vals[0],vals[1]);
+    printf("Point: %u %u\n",vals[0],vals[1]);
   }
 
   if(debug == 0){
@@ -76,7 +56,7 @@ void readPoints(uint64_t offset,uint64_t numPoints)
 
 }
 
-void readQueries(string filename)
+void readQueries(string filename, uint64_t numCores)
 {
   ifstream file (filename, ios::in|ios::binary);
   char type[8]; // may want to generalize this;
@@ -90,6 +70,29 @@ void readQueries(string filename)
   //uint32_t test;
   //file.read(reinterpret_cast<char *>(&test),sizeof(&test));
   //printf("first: %u\n",test);
+  static char inputFileoffset = 40;//this is to let us seek past the pointless stuff in the beginning
+  uint64_t querySize = numDimensions*4;
+  uint64_t numIters = numQueries/numCores;
+  uint64_t offsetData = numIters*querySize;//4 is the size for each 32 bit in a points value, times the number of dimensions
+  thread readers[numCores];
+  uint64_t numThreads = 0;
+  if(debug == 0){
+    printf("Using %lu threads, we assign each thread %lu points, leaving the last thread with %lu entries.\n",numCores,numIters, numQueries-numIters*(numCores-1));
+  }
+  while(numThreads<numCores-1)//leave remaining points to last thread
+  {
+    readers[numThreads]= thread(readPoints,inputFileoffset+numThreads*offsetData,numIters);
+    numThreads++;
+  }
+  readers[numThreads]=thread(readPoints,inputFileoffset+numThreads*offsetData,numQueries-numIters*numThreads);//these are the remaining points
+
+  numThreads=0;
+  while (numThreads<numCores)
+  {
+    readers[numThreads].join();
+    numThreads++;
+  }
+  
   vector<point> points;
   while(!file.eof())
   {
