@@ -1,0 +1,10 @@
+time ./exec 2 scripts/data_18232043.dat s
+cripts/query_18230629.dat whatevls
+Header: TRAINING 18232043 10000000 2
+Header repeat: 10000000 2
+Header: QUERY 18230629 1000 2 3
+Header repeat: 1000 2
+
+real    0m13.149s
+user    0m11.094s
+sys     0m2.047s
