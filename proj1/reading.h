@@ -3,8 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-
-void readInput(std::string filename,std::uint64_t numCores);
+#include "point.h"
+std::vector<point> readInput(std::string filename,std::uint64_t numCores);
 void readQueries(std::string filename,std::uint64_t numCores);
 void writeResults(std::string filename);
 void writeBinary(std::string filename);

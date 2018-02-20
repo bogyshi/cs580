@@ -2,8 +2,8 @@
 all: exec
 
 .PHONY: exec
-exec: exec.o reading.o point.o
-	g++ -std=c++11 -pthread -g -o exec exec.o reading.o point.o
+exec: exec.o reading.o point.o KDTree.o
+	g++ -std=c++11 -pthread -g -o exec exec.o reading.o point.o KDTree.o
 
 .PHONY: point.o
 point.o: point.h
@@ -23,4 +23,4 @@ exec.o: reading.h point.h
 
 .PHONY: clean
 clean:
-	rm -f *.o reading a.out
+	rm -f *.o reading a.out exec

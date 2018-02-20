@@ -1,5 +1,4 @@
 #include "reading.h"
-#include "KDTree.h"
 #include "point.h"
 #include <assert.h>
 #include <thread>
@@ -15,7 +14,7 @@ uint64_t kNum;
 
 bool debug = 0;
 
-void readInput(string filename,const uint64_t numCores)
+vector<point> readInput(string filename,const uint64_t numCores)
 {
   inputFile = filename;
   ifstream file (inputFile, ios::in|ios::binary);
@@ -27,7 +26,7 @@ void readInput(string filename,const uint64_t numCores)
   uint64_t numDim;
   file.read(reinterpret_cast<char *>(&numDim),sizeof(numDim));
   printf("Header: %s %lu %lu %lu\n",type,inputID,numEntries,numDim);
-  
+
   //uint32_t test;
   //file.read(reinterpret_cast<char *>(&test),sizeof(&test));
   //printf("first: %u\n",test);
@@ -41,12 +40,13 @@ void readInput(string filename,const uint64_t numCores)
       break;
     }
     points.push_back((point(numDim,vals))); //IS THIS ALLOWED?!??!?!?!!?
-    printf("Point: %u %u\n",vals[0],vals[1]);
+    //printf("Point: %u %u\n",vals[0],vals[1]);
   }
 
   if(debug == 0){
-    printf("Header repeat: %lu %lu\n",points.size(),points[0].numDim);
+    printf("Header repeat: %lu %u\n",points.size(),points[0].values[1]);
   }
+  return points;
   //printf("Point: %u %u\n",points[0].values[0],points[0].values[1]);
   //delete &points;
 }
@@ -92,7 +92,7 @@ void readQueries(string filename, uint64_t numCores)
     readers[numThreads].join();
     numThreads++;
   }
-  
+
   vector<point> points;
   while(!file.eof())
   {
@@ -119,6 +119,7 @@ void writeResults(string filename)
 void writeBinary(string filename)
 {
   ofstream file;
+  char type[8] = "TRAIN";
   uint64_t ID = 1234;
   uint64_t numEntries = 100;
   uint64_t numDim = 4;
@@ -126,7 +127,9 @@ void writeBinary(string filename)
   uint32_t y1 = 2;
   uint32_t z1 = 3;
   uint32_t w1 = 4;
+
   file.open(filename,ios::out|ios::binary);
+  file.write((char *) &type,sizeof(type));
   file.write((char *) &ID,sizeof(ID));
   file.write((char *) &numEntries,sizeof(numEntries));
   file.write((char *) &numDim,sizeof(numDim));
