@@ -4,6 +4,9 @@
 #include "KDTree.h"
 #include <iostream>
 #include <cstdlib>
+#include <chrono>
+#include <ctime>
+#include <ratio>
 
 using namespace std;
 
@@ -20,11 +23,13 @@ int main(int argc, char ** argv)
   vector<point> points;
   n_cores = atoi(argv[1]);
   points = readInput(argv[2],n_cores);
+  std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
   KDTree * head = buildTree(points,n_cores);
+  std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now(); 
   int i=0;
-  while(head->left!=NULL)
+  while(head->right!=NULL)
   {
-    head = head->left;
+    head = head->right;
     i++;
   }
 

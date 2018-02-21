@@ -15,9 +15,11 @@ static uint64_t workAvailable;
 static queue< pair<KDTree *, vector<point>>> workingQueue;
 static uint64_t numCores;
 static uint64_t maxThreads;
+static const float samplePercent = 0.5;
 mutex mx;
 //shared_mutex numThreads;
 condition_variable workToDo;
+condition_variable workIsDone;
 KDTree::KDTree()
 {
   splitDim=0;
@@ -80,7 +82,7 @@ KDTree * buildTree(vector<point> points,uint64_t nCores)
   {
     //unique_lock<mutex> lck(mx);
     //workToDo.wait(lck);
-    cerr<<"stuck";
+    //cerr<<"stuck";
     if(availableThreads==maxThreads && workAvailable==0)
     {
       cerr<<"work is officially done"<<endl;
@@ -95,7 +97,10 @@ KDTree * buildTree(vector<point> points,uint64_t nCores)
     while(i<maxThreads)
     {
       cerr<<"waiting for thread"<<i<<endl;
-      workToDo.notify_all();
+      //unique_lock<mutex> lck(mx);
+      //workIsDone.wait(lck);
+      //lck.unlock();
+      workToDo.notify_one();
       ++i;
     }
     i=0;
@@ -121,7 +126,7 @@ void completeTree(uint64_t numDim)
   while(true)
   {
     //check if all threads are available and break if that is true
-
+    //cerr<<"doing stuff?";
     unique_lock<mutex> lck(mx);
     while(workAvailable<=0)
     {
@@ -135,6 +140,7 @@ void completeTree(uint64_t numDim)
     if(workAvailable==0 && availableThreads==maxThreads)
     {
       lck.unlock();
+      //workIsDone.notify_one();
       break;
     }
     pair<KDTree *, vector<point>> temp = workingQueue.front();
@@ -203,18 +209,27 @@ void completeTree(uint64_t numDim)
 
 float sampledMedian(vector<point> points, uint64_t DTS)//DTS=dimensionToSplit
 {
-  if(false)//points.size()<100) // so small we will determine a true median
+  uint64_t i=0;
+  uint64_t sz = points.size();
+  uint64_t loc;
+  point val;
+  vector<float> holder;
+  if(sz<100)//points.size()<100) // so small we will determine a true median
   {
+    while(i<sz)
+    {
+      val = points[i];
+      holder.push_back(val.values[DTS]);
+      ++i;
+    }
+    nth_element(holder.begin(),holder.begin()+holder.size()/2,holder.end());//found here http://en.cppreference.com/w/cpp/algorithm/nth_element
+    
     //nth_element(points.begin(),points.begin()+points.size()/2,points.end());
   }
   else
   {
-    uint64_t i=0;
-    uint64_t sz = points.size();
-    uint64_t loc;
-    point val;
-    vector<float> holder;
-    while(i<sz*0.05)
+    uint64_t numSam = sz*samplePercent;
+    while(i<numSam)
     {
       loc = dist(gen)%sz;
       val = points[loc];
@@ -222,6 +237,6 @@ float sampledMedian(vector<point> points, uint64_t DTS)//DTS=dimensionToSplit
       ++i;
     }
     nth_element(holder.begin(),holder.begin()+holder.size()/2,holder.end());//found here http://en.cppreference.com/w/cpp/algorithm/nth_element
-    return holder[holder.size()/2];
   }
+  return holder[holder.size()/2];
 }
