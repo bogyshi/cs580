@@ -7,8 +7,8 @@ class point
 {
   public:
     uint64_t numDim;
-    std::vector<uint32_t> values;
-    point(uint64_t nDim, uint32_t * vals);
+    std::vector<float> values;
+    point(uint64_t nDim, float * vals);
     point();
     ~point();
 

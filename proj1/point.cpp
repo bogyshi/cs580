@@ -1,6 +1,6 @@
 #include "point.h"
 #include <cstring>
-point::point(uint64_t nDim, uint32_t * vals)
+point::point(uint64_t nDim, float * vals)
 {
   numDim=nDim;
   unsigned int i = 0;

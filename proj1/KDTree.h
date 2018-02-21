@@ -8,6 +8,10 @@
 #include <functional>
 #include <queue>
 #include <utility>
+#include <mutex>
+#include <condition_variable>
+#include <iostream>
+//#include <shared_mutex>
 
 class KDTree
 {
@@ -23,5 +27,6 @@ class KDTree
 };
 
 KDTree * buildTree(std::vector<point>,uint64_t numCores);
-uint32_t sampledMedian(std::vector<point> points, uint64_t DTS);
+float sampledMedian(std::vector<point> points, uint64_t DTS);
+void completeTree(uint64_t numDim);
 #endif

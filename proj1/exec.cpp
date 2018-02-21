@@ -21,9 +21,16 @@ int main(int argc, char ** argv)
   n_cores = atoi(argv[1]);
   points = readInput(argv[2],n_cores);
   KDTree * head = buildTree(points,n_cores);
+  int i=0;
+  while(head->left!=NULL)
+  {
+    head = head->left;
+    i++;
+  }
+
   if (debug == 0)
   {
-    printf("points in left %lu points in right %lu", head->left->allPoints.size(),head->right->allPoints.size());
+    printf("points in head %lu, with depth %i", head->allPoints.size(),i);
   }
   //readQueries(argv[3],n_cores);
   //writeBinary(argv[4]);

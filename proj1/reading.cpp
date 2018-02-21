@@ -33,18 +33,18 @@ vector<point> readInput(string filename,const uint64_t numCores)
   vector<point> points;
   while(!file.eof())
   {
-    uint32_t vals[numDim];
+    float vals[numDim];
     file.read(reinterpret_cast<char *>(&vals),sizeof(&vals));
     if(file.ios::fail())
     {
       break;
     }
     points.push_back((point(numDim,vals))); //IS THIS ALLOWED?!??!?!?!!?
-    //printf("Point: %u %u\n",vals[0],vals[1]);
+    //printf("Point: %f %f\n",vals[0],vals[1]);
   }
 
   if(debug == 0){
-    printf("Header repeat: %lu %u\n",points.size(),points[0].values[1]);
+    printf("Header repeat: %lu %f\n",points.size(),points[0].values[1]);
   }
   return points;
   //printf("Point: %u %u\n",points[0].values[0],points[0].values[1]);
@@ -96,7 +96,7 @@ void readQueries(string filename, uint64_t numCores)
   vector<point> points;
   while(!file.eof())
   {
-    uint32_t vals[numDimensions];
+    float vals[numDimensions];
     file.read(reinterpret_cast<char *>(&vals),sizeof(&vals));
     if(file.ios::fail())
     {
