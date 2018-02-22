@@ -12,6 +12,7 @@
 #include <condition_variable>
 #include <iostream>
 #include <chrono>
+
 //#include <shared_mutex>
 
 class KDTree
@@ -19,6 +20,7 @@ class KDTree
   public:
     uint64_t splitDim;
     uint64_t numPoints;
+    uint64_t depth;
     KDTree * left;
     KDTree * right;
     KDTree();

@@ -10,16 +10,15 @@ random_device rd;
 mt19937 gen(rd());
 static uniform_int_distribution<uint64_t> dist(0,ULLONG_MAX);
 static const uint64_t THRESH = 10;
-static uint64_t availableThreads;
-static uint64_t workAvailable;
-static queue< pair<KDTree *, vector<point>>> workingQueue;
+static uint64_t availableThreads; //locked by mutex mx
+static uint64_t workAvailable; //locked by mutex mx
+static queue< pair<KDTree *, vector<point>>> workingQueue; // locked by mutex mx
 static uint64_t numCores;
 static uint64_t maxThreads;
-static const float samplePercent = 0.5;
+static const float samplePercent = 0.10;
 mutex mx;
 //shared_mutex numThreads;
 condition_variable workToDo;
-condition_variable workIsDone;
 KDTree::KDTree()
 {
   splitDim=0;
@@ -67,6 +66,9 @@ KDTree * buildTree(vector<point> points,uint64_t nCores)
 
   head->left = new KDTree(1);
   head->right = new KDTree(1);
+  head->depth = 0;
+  head->left->depth=1;
+  head->right->depth=1;
   workingQueue.push(pair<KDTree *, vector<point>>(head->left,leftPoints));
   workingQueue.push(pair<KDTree *, vector<point>>(head->right,rightPoints));
   workAvailable=2;
@@ -96,10 +98,6 @@ KDTree * buildTree(vector<point> points,uint64_t nCores)
     i=0;
     while(i<maxThreads)
     {
-      cerr<<"waiting for thread"<<i<<endl;
-      //unique_lock<mutex> lck(mx);
-      //workIsDone.wait(lck);
-      //lck.unlock();
       workToDo.notify_one();
       ++i;
     }
@@ -140,7 +138,6 @@ void completeTree(uint64_t numDim)
     if(workAvailable==0 && availableThreads==maxThreads)
     {
       lck.unlock();
-      //workIsDone.notify_one();
       break;
     }
     pair<KDTree *, vector<point>> temp = workingQueue.front();
@@ -160,11 +157,11 @@ void completeTree(uint64_t numDim)
       vector<point> rightPoints;
       while(i<sz)
       {
-        if(points[i].values[0]<val)
+        if(points[i].values[head->splitDim]<val)
         {
           leftPoints.push_back(points[i]);
         }
-        else if(points[i].values[0]>val)
+        else if(points[i].values[head->splitDim]>val)
         {
           rightPoints.push_back(points[i]);
         }
@@ -180,12 +177,14 @@ void completeTree(uint64_t numDim)
       if(leftPoints.size()>0)
       {
         head->left = new KDTree(((head->splitDim)+1)%numDim);
+        head->left->depth = head->depth+1;
         workingQueue.push(pair<KDTree *, vector<point>>(head->left,leftPoints));
         workAvailable+=1;
       }
       if(rightPoints.size()>0)
       {
         head->right = new KDTree(((head->splitDim)+1)%numDim);
+        head->right->depth = head->depth+1;
         workingQueue.push(pair<KDTree *, vector<point>>(head->right,rightPoints));
         workAvailable+=1;
       }
@@ -223,7 +222,7 @@ float sampledMedian(vector<point> points, uint64_t DTS)//DTS=dimensionToSplit
       ++i;
     }
     nth_element(holder.begin(),holder.begin()+holder.size()/2,holder.end());//found here http://en.cppreference.com/w/cpp/algorithm/nth_element
-    
+
     //nth_element(points.begin(),points.begin()+points.size()/2,points.end());
   }
   else

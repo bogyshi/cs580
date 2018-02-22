@@ -13,4 +13,6 @@ class point
     ~point();
 
 };
+
+
 #endif
