@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <thread>
 #include <limits.h>
-
+//CXX= -Wextra/...
 using namespace std;
 random_device rd;
 mt19937 gen(rd());
@@ -33,10 +33,9 @@ KDTree::KDTree(uint64_t dimSplit)
   left = NULL;
   right = NULL;
 }
-
-KDTree * buildTree(vector<point> points,uint64_t nCores)
+unique_ptr<KDTree> buildTree(vector<point> points,uint64_t nCores)
 {
-  KDTree * head = new KDTree();
+  unique_ptr<KDTree> head = make_unique<KDTree>();
   float val = sampledMedian(points,0);
   uint64_t i = 0;
   uint64_t sz = points.size();
@@ -64,13 +63,13 @@ KDTree * buildTree(vector<point> points,uint64_t nCores)
   availableThreads = numCores;
   maxThreads = availableThreads;
 
-  head->left = new KDTree(1);
-  head->right = new KDTree(1);
+  head->left = make_unique<KDTree>(1);
+  head->right = make_unique<KDTree>(1);
   head->depth = 0;
   head->left->depth=1;
   head->right->depth=1;
-  workingQueue.push(pair<KDTree *, vector<point>>(head->left,leftPoints));
-  workingQueue.push(pair<KDTree *, vector<point>>(head->right,rightPoints));
+  workingQueue.push(pair<KDTree *, vector<point>>(head->left.get(),leftPoints));
+  workingQueue.push(pair<KDTree *, vector<point>>(head->right.get(),rightPoints));
   workAvailable=2;
   i = 0;
   thread builders[numCores];
@@ -176,16 +175,16 @@ void completeTree(uint64_t numDim)
       lck.lock(); //MAY WANT TO MOVE THIS
       if(leftPoints.size()>0)
       {
-        head->left = new KDTree(((head->splitDim)+1)%numDim);
+        head->left = make_unique<KDTree>(((head->splitDim)+1)%numDim);
         head->left->depth = head->depth+1;
-        workingQueue.push(pair<KDTree *, vector<point>>(head->left,leftPoints));
+        workingQueue.push(pair<KDTree *, vector<point>>(head->left.get(),leftPoints));
         workAvailable+=1;
       }
       if(rightPoints.size()>0)
       {
-        head->right = new KDTree(((head->splitDim)+1)%numDim);
+        head->right = make_unique<KDTree>(((head->splitDim)+1)%numDim);
         head->right->depth = head->depth+1;
-        workingQueue.push(pair<KDTree *, vector<point>>(head->right,rightPoints));
+        workingQueue.push(pair<KDTree *, vector<point>>(head->right.get(),rightPoints));
         workAvailable+=1;
       }
 

@@ -8,7 +8,9 @@ uint64_t queryID;
 uint64_t numQueries;
 uint64_t numDimensions;
 uint64_t kNum;
-
+uint64_t numIters;
+const uint64_t ogOffset = 56;
+uint64_t ID = 0;
 bool debug = 0;
 
 static KDTree * head;
@@ -24,24 +26,40 @@ vector<point> readInput(string filename,const uint64_t numCores)
   file.read(reinterpret_cast<char *>(&numEntries),sizeof(numEntries));
   uint64_t numDim;
   file.read(reinterpret_cast<char *>(&numDim),sizeof(numDim));
-  printf("Header: %s %lu %lu %lu\n",type,inputID,numEntries,numDim);
+  numDimensions=numDim;
+  printf("Header: %s %lu %lu %lu\n",type,inputID,numEntries,numDimensions);
 
   //uint32_t test;
   //file.read(reinterpret_cast<char *>(&test),sizeof(&test));
   //printf("first: %u\n",test);
   vector<point> points;
+  int j = 0;
+  float val;
+  uint64_t counter=0;
   while(!file.eof())
   {
-    float vals[numDim];
-    file.read(reinterpret_cast<char *>(&vals),sizeof(&vals));
+    float vals[numDimensions];
+    j=0;
+    while(j<numDimensions)
+      {
+	file.read(reinterpret_cast<char *>(&val),sizeof(float));
+	vals[j]=val;
+	j++;
+      }
+    
     if(file.ios::fail())
     {
+      //cerr<<"wut";
       break;
     }
-    points.push_back((point(numDim,vals))); //IS THIS ALLOWED?!??!?!?!!?
+    points.push_back(point(numDimensions,vals)); //IS THIS ALLOWED?!??!?!?!!?
     //printf("Point: %f %f\n",vals[0],vals[1]);
   }
 
+  if(points.size()!=numEntries)
+    {
+      cerr<<"something happened reading in this stuff";
+    }
   if(debug == 0){
     printf("Header repeat: %lu %f\n",points.size(),points[0].values[1]);
   }
@@ -50,19 +68,37 @@ vector<point> readInput(string filename,const uint64_t numCores)
   //delete &points;
 }
 
-void readPoints(uint64_t offset,uint64_t numPoints,string filename)
+void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilename)
 {
   uint64_t i = 0;
   uint64_t j=0;
   int dC = 0;
   float val;
   ifstream file (filename, ios::in|ios::binary);
+  ofstream fileR(rfilename, ios::out|ios::binary);
+  uint64_t resultFileLoc = offset/numIters;
+  char name[8] = "RESULT0";
+  name[7]='0';
+  
+  if(resultFileLoc == 0)
+    {
+      fileR.write((char *) &name,sizeof(name));
+      fileR.write((char *) &inputID,sizeof(inputID));
+      fileR.write((char *) &queryID,sizeof(queryID));
+      fileR.write((char *) &ID,sizeof(ID));
+      fileR.write((char *) &numQueries,sizeof(numQueries));
+      fileR.write((char *) &numDimensions,sizeof(numDimensions));
+      fileR.write((char *) &kNum,sizeof(kNum));
+    }
+  const uint64_t offsetPerPoint = kNum*numDimensions*5;//size of each entry in results
   //cerr<<offset<<endl;
   file.seekg(offset);
+  fileR.seekp(ogOffset+resultFileLoc*numPoints*offsetPerPoint);
   while(i<numPoints)
   {
 
     float vals[numDimensions];
+    j=0;
     while(j<numDimensions)
     {
       file.read(reinterpret_cast<char *>(&val),sizeof(val));
@@ -76,6 +112,7 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename)
     point query = point(numDimensions,vals);
 
     vector<point> knn = getKNearestNeighbors(query);
+    
     /*printf("%f,%f with NN \n",query.values[0],query.values[1]);
     dC=0;
     while(dC<kNum)
@@ -136,10 +173,10 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
   vector<point> newCurrPoints;
   if(node->allPoints[0].values[DS]<query.values[DS] && node->right !=NULL)
   {
-    newCurrPoints = recursiveKNN(node->right,(DS+1)%numDimensions,currPoints,query);
+    newCurrPoints = recursiveKNN(node->right.get(),(DS+1)%numDimensions,currPoints,query);
     if(newCurrPoints.size()<kNum && node->left!=NULL)//we havent found enough neighbors yet! go down the other branch
     {
-      newCurrPoints = recursiveKNN(node->left,(DS+1)%numDimensions,newCurrPoints,query);
+      newCurrPoints = recursiveKNN(node->left.get(),(DS+1)%numDimensions,newCurrPoints,query);
     }
     else // check difference between splitDimension points, we have enough neighboors, but maybe there is more to go
     {
@@ -147,7 +184,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         if(node->left!=NULL)
         {
-          newCurrPoints = recursiveKNN(node->left,(DS+1)%numDimensions,newCurrPoints,query);
+          newCurrPoints = recursiveKNN(node->left.get(),(DS+1)%numDimensions,newCurrPoints,query);
         }
       }
     }
@@ -168,10 +205,10 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
   }
   else if(node->allPoints[0].values[DS]>query.values[DS] && node->left !=NULL)
   {
-    newCurrPoints = recursiveKNN(node->left,(DS+1)%numDimensions,currPoints,query);
+    newCurrPoints = recursiveKNN(node->left.get(),(DS+1)%numDimensions,currPoints,query);
     if(newCurrPoints.size()<kNum && node->right!=NULL)
     {
-      newCurrPoints = recursiveKNN(node->right,(DS+1)%numDimensions,newCurrPoints,query);
+      newCurrPoints = recursiveKNN(node->right.get(),(DS+1)%numDimensions,newCurrPoints,query);
     }
     else // check difference between splitDimension points
     {
@@ -179,7 +216,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         if(node->right!=NULL)
         {
-          newCurrPoints = recursiveKNN(node->right,(DS+1)%numDimensions,newCurrPoints,query);
+          newCurrPoints = recursiveKNN(node->right.get(),(DS+1)%numDimensions,newCurrPoints,query);
         }
       }
     }
@@ -257,8 +294,32 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
   return newCurrPoints;
 
 }
-void readQueries(string filename, uint64_t numCores,KDTree * root)
+void readQueries(string filename, uint64_t numCores,KDTree * root,string rname)
 {
+  //below code on getting random value was taken from https://stackoverflow.com/questions/35726331/c-extracting-random-numbers-from-dev-urandom
+  //Declare value to store data into
+  size_t size = sizeof(ID); //Declare size of data
+  ifstream urandom("/dev/urandom", ios::in|ios::binary); //Open stream
+  if(urandom) //Check if stream is open
+    {
+      urandom.read(reinterpret_cast<char*>(&ID), size); //Read from urandom
+      if(urandom) //Check if stream is ok, read succeeded
+        {
+	  std::cout << "Read random value: " << ID << std::endl;
+        }
+      else //Read failed
+        {
+	  ID=0;
+	  std::cerr << "Failed to read from /dev/urandom" << std::endl;
+        }
+      urandom.close(); //close stream
+    }
+  else //Open failed
+    {
+      ID = 0;
+      std::cerr << "Failed to open /dev/urandom" << std::endl;
+    }
+  
   head = root;
   ifstream file (filename, ios::in|ios::binary);
   char type[8]; // may want to generalize this;
@@ -274,7 +335,7 @@ void readQueries(string filename, uint64_t numCores,KDTree * root)
   //printf("first: %u\n",test);
   static char inputFileoffset = 40;//this is to let us seek past the pointless stuff in the beginning
   uint64_t querySize = numDimensions*4;
-  uint64_t numIters = numQueries/numCores;//how many we are going to do
+  numIters = numQueries/numCores;//how many we are going to do
   uint64_t offsetData = numIters*querySize;//4 is the size for each 32 bit in a points value, times the number of dimensions
   thread readers[numCores];
   uint64_t numThreads = 0;
@@ -283,10 +344,10 @@ void readQueries(string filename, uint64_t numCores,KDTree * root)
   }
   while(numThreads<numCores-1)//leave remaining points to last thread
   {
-    readers[numThreads]= thread(readPoints,inputFileoffset+numThreads*offsetData,numIters,filename);
+    readers[numThreads]= thread(readPoints,inputFileoffset+numThreads*offsetData,numIters,filename,rname);
     numThreads++;
   }
-  readers[numThreads]=thread(readPoints,inputFileoffset+numThreads*offsetData,numQueries-numIters*numThreads,filename);//these are the remaining points
+  readers[numThreads]=thread(readPoints,inputFileoffset+numThreads*offsetData,numQueries-numIters*numThreads,filename,rname);//these are the remaining points
 
   numThreads=0;
   while (numThreads<numCores)
@@ -322,7 +383,6 @@ void writeBinary(string filename)
 {
   ofstream file;
   char type[8] = "TRAIN";
-  uint64_t ID = 1234;
   uint64_t numEntries = 100;
   uint64_t numDim = 4;
   uint32_t x1 = 1;
@@ -332,7 +392,6 @@ void writeBinary(string filename)
 
   file.open(filename,ios::out|ios::binary);
   file.write((char *) &type,sizeof(type));
-  file.write((char *) &ID,sizeof(ID));
   file.write((char *) &numEntries,sizeof(numEntries));
   file.write((char *) &numDim,sizeof(numDim));
   file.write((char *) &x1,sizeof(x1));

@@ -66,3 +66,23 @@ sys	0m0.654s
 THIS WAS WITH SAMPLE SIZE .5
 
 
+Header: TRAINING0Ԥ=� 22105116 10000 2
+Header repeat: 10000 257.668243
+work is officially done
+waiting for thread0
+it took 0.179249 seconds to build the treeavg depth 11
+Header: QUERY 22105139 10000 2 3
+Using 1 threads, we assign each thread 10000 points, leaving the last thread with 10000 entries.
+handled 10000 pointsit took 65.8129 s
+avanroi1@g7-13:~/cs580f/cs580/proj1$ 
+avanroi1@g7-13:~/cs580f/cs580/proj1$ 
+avanroi1@g7-13:~/cs580f/cs580/proj1$ ./exec 2 scripts/2d/data_22105116.dat scripts/2d/query_22105139.dat whatev
+ 22105116 10000 2�ׄ
+Header repeat: 10000 257.668243
+work is officially done
+waiting for thread0
+waiting for thread1
+it took 0.115802 seconds to build the treeavg depth 11
+Header: QUERY 22105139 10000 2 3
+Using 2 threads, we assign each thread 5000 points, leaving the last thread with 5000 entries.
+handled 5000 pointshandled 5000 pointsit took 33.3879 seconds to solve queriesav

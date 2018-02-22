@@ -10,6 +10,7 @@ class point
     std::vector<float> values;
     point(uint64_t nDim, float * vals);
     point();
+    point(const point &);
     ~point();
 
 };

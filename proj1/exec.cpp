@@ -22,21 +22,21 @@ int main(int argc, char ** argv)
   }
   //writeBinary("test");
   uint64_t n_cores;
-  vector<point> points;
+  vector<point>  points;
   n_cores = atoi(argv[1]);
   points = readInput(argv[2],n_cores);
   std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
-  KDTree * head = buildTree(points,n_cores);
+  unique_ptr<KDTree> head = buildTree(points,n_cores);
   std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
   cerr<<"it took " << timeElapsed.count() << " seconds to build the tree";
   if (debug == 0)
   {
     //printf("points in head %lu, with depth %i\n", head->allPoints.size(),i);
-    printf("avg depth %lu\n", avgDepth(head));
+    printf("avg depth %lu\n", avgDepth(head.get()));
   }
   beforeBuild = std::chrono::high_resolution_clock::now();
-  readQueries(argv[3],n_cores,head);
+  readQueries(argv[3],n_cores,head.get(),argv[4]);
   afterBuild = std::chrono::high_resolution_clock::now();
   timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
   cerr<<"it took " << timeElapsed.count() << " seconds to solve queries";
@@ -57,18 +57,18 @@ pair<uint64_t, uint64_t> testBalance(KDTree * node)
   }
   else if(node->left!=NULL && node->right!=NULL)
   {
-    pair<uint64_t, uint64_t > temp1 = testBalance(node->left);
-    pair<uint64_t, uint64_t > temp2 = testBalance(node->right);
+    pair<uint64_t, uint64_t > temp1 = testBalance(node->left.get());
+    pair<uint64_t, uint64_t > temp2 = testBalance(node->right.get());
     pair<uint64_t, uint64_t > result = pair<uint64_t, uint64_t >(temp1.first+temp2.first,temp1.second+temp2.second);
     return result;
   }
   else if(node->left!=NULL)
   {
-    return testBalance(node->left);
+    return testBalance(node->left.get());
   }
   else
   {
-    return testBalance(node->right);
+    return testBalance(node->right.get());
   }
   //return NULL;
 }

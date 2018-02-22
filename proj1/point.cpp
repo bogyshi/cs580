@@ -18,6 +18,16 @@ point::point()
   numDim=0;
 
 }
+point::point(const point &p)
+{
+  numDim=p.numDim;
+  unsigned int i = 0;
+  for (;i<numDim;i++)
+  {
+    values.push_back(p.values[i]);
+
+  }
+}
 point::~point()
 {
 

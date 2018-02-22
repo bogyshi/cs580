@@ -9,10 +9,10 @@
 #include "KDTree.h"
 #include <cmath>
 std::vector<point> readInput(std::string filename,std::uint64_t numCores);
-void readQueries(std::string filename,std::uint64_t numCores,KDTree *);
+void readQueries(std::string filename,std::uint64_t numCores,KDTree *,std::string rname);
 void writeResults(std::string filename);
 void writeBinary(std::string filename);
-void readPoints(std::uint64_t offset,std::uint64_t numPoints,std::string);
+void readPoints(std::uint64_t offset,std::uint64_t numPoints,std::string,std::string);
 std::vector<point> getKNearestNeighbors(point query);
 float calcDist(point p1, point p2);
 std::vector<point> getKNearestNeighbors(point query);
