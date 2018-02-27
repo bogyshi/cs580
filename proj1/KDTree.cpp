@@ -238,3 +238,44 @@ float sampledMedian(vector<point> points, uint64_t DTS)//DTS=dimensionToSplit
   }
   return holder[holder.size()/2];
 }
+
+void testKNN(std::vector<point> allPoints, point query, uint64_t kNN)
+{
+  uint64_t sz = allPoints.size();
+  uint64_t counter = 0;
+  uint64_t tempCounter;
+  vector<point> minPoints;
+  minPoints.push_back(allPoints[counter]);
+  counter++;
+  while(counter<sz)
+    {
+      if(minPoints.size()<kNN)
+	{
+	  tempCounter=0;
+	  while(tempCounter<minPoints.size())
+	    {
+	      if(calcDist(query,allPoints[counter])<calcDist(query,minPoints[tempCounter]))
+		{
+		  minPoints.insert(minPoints.begin()+tempCounter,allPoints[counter]);
+		  break;
+		}
+	      tempCounter++;
+	    }
+	}
+      else if(calcDist(query,allPoints[counter])<calcDist(query,minPoints[minPoints.size()-1]))//it is a lesser weight than what we already have
+	{
+	  tempCounter=0;
+	  while(tempCounter<minPoints.size())
+	    {
+	      if(calcDist(query,allPoints[counter])<calcDist(query,minPoints[tempCounter]))
+		{
+		  minPoints.insert(minPoints.begin()+tempCounter,allPoints[counter]);
+		  minPoints.pop_back();
+		  break;
+		}
+	      tempCounter++;
+	    }
+	}
+      counter++;
+    }
+}

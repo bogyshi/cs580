@@ -32,4 +32,5 @@ class KDTree
 std::unique_ptr<KDTree> buildTree(std::vector<point>,uint64_t numCores);
 float sampledMedian(std::vector<point> points, uint64_t DTS);
 void completeTree(uint64_t numDim);
+void testKNN(std::vector<point> allPoints, point query, uint64_t kNN);
 #endif
