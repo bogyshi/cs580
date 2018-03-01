@@ -30,7 +30,7 @@ int main(int argc, char ** argv)
   std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
   cerr<<"it took " << timeElapsed.count() << " seconds to build the tree";
-  if (debug == 0)
+  if (debug == 1)
   {
     //printf("points in head %lu, with depth %i\n", head->allPoints.size(),i);
     printf("avg depth %lu\n", avgDepth(head.get()));
@@ -53,6 +53,7 @@ uint64_t avgDepth(KDTree * head)
 
 pair<uint64_t, uint64_t> testBalance(KDTree * node)
 {
+  /*
   if(node->left==NULL && node->right==NULL)
   {
     return pair<uint64_t, uint64_t >(node->depth,1);
@@ -72,5 +73,6 @@ pair<uint64_t, uint64_t> testBalance(KDTree * node)
   {
     return testBalance(node->right.get());
   }
+  */
   //return NULL;
 }

@@ -22,14 +22,14 @@ condition_variable workToDo;
 KDTree::KDTree()
 {
   splitDim=0;
-  numPoints=0;
+  //numPoints=0;
   left = NULL;
   right = NULL;
 }
 KDTree::KDTree(uint64_t dimSplit)
 {
   splitDim=dimSplit;
-  numPoints=0;
+  //numPoints=0;
   left = NULL;
   right = NULL;
 }
@@ -56,7 +56,7 @@ unique_ptr<KDTree> buildTree(vector<point> points,uint64_t nCores)
     else
     {
       head->allPoints.push_back(points[i]);
-      head->numPoints++;
+      //head->numPoints++;
     }
     ++i;
   }
@@ -65,9 +65,9 @@ unique_ptr<KDTree> buildTree(vector<point> points,uint64_t nCores)
 
   head->left = make_unique<KDTree>(1);
   head->right = make_unique<KDTree>(1);
-  head->depth = 0;
+  /*head->depth = 0;
   head->left->depth=1;
-  head->right->depth=1;
+  head->right->depth=1;*/ //uncomment to bring back depth
   workingQueue.push(pair<KDTree *, vector<point>>(head->left.get(),leftPoints));
   workingQueue.push(pair<KDTree *, vector<point>>(head->right.get(),rightPoints));
   workAvailable=2;
@@ -167,7 +167,7 @@ void completeTree(uint64_t numDim)
         else
         {
           head->allPoints.push_back(points[i]);
-          head->numPoints++;
+          //head->numPoints++;
         }
         ++i;
       }
@@ -176,14 +176,14 @@ void completeTree(uint64_t numDim)
       if(leftPoints.size()>0)
       {
         head->left = make_unique<KDTree>(((head->splitDim)+1)%numDim);
-        head->left->depth = head->depth+1;
+        //head->left->depth = head->depth+1;
         workingQueue.push(pair<KDTree *, vector<point>>(head->left.get(),leftPoints));
         workAvailable+=1;
       }
       if(rightPoints.size()>0)
       {
         head->right = make_unique<KDTree>(((head->splitDim)+1)%numDim);
-        head->right->depth = head->depth+1;
+        //head->right->depth = head->depth+1;
         workingQueue.push(pair<KDTree *, vector<point>>(head->right.get(),rightPoints));
         workAvailable+=1;
       }

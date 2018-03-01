@@ -20,8 +20,6 @@ class KDTree
 {
   public:
     uint64_t splitDim;
-    uint64_t numPoints;
-    uint64_t depth;
     std::unique_ptr<KDTree> left;
     std::unique_ptr<KDTree> right;
     KDTree();
