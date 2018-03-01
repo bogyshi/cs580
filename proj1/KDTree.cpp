@@ -278,4 +278,11 @@ void testKNN(std::vector<point> allPoints, point query, uint64_t kNN)
 	}
       counter++;
     }
+  counter = 0;
+  printf("\nBEGIN BRUTEFORCECALC\n");
+  while(counter<minPoints.size())
+    {
+      printf("%f,%f with dist %f\n",minPoints[counter].values[0],minPoints[counter].values[1],calcDist(query,minPoints[counter]));
+      counter++;
+    }
 }

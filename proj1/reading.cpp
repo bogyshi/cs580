@@ -9,13 +9,14 @@ uint64_t numQueries;
 uint64_t numDimensions;
 uint64_t kNum;
 uint64_t numIters;
+//vector<point> knn;
 const uint64_t ogOffset = 56;
 uint64_t ID = 0;
-bool debug = 0;
+bool debug = 1;
 
 static KDTree * head;
 
-vector<point> readInput(string filename,const uint64_t numCores)
+vector<point> readInput(string filename)
 {
   inputFile = filename;
   ifstream file (inputFile, ios::in|ios::binary);
@@ -33,9 +34,8 @@ vector<point> readInput(string filename,const uint64_t numCores)
   //file.read(reinterpret_cast<char *>(&test),sizeof(&test));
   //printf("first: %u\n",test);
   vector<point> points;
-  int j = 0;
+  uint64_t j = 0;
   float val;
-  uint64_t counter=0;
   while(!file.eof())
   {
     float vals[numDimensions];
@@ -68,20 +68,33 @@ vector<point> readInput(string filename,const uint64_t numCores)
   //delete &points;
 }
 
-void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilename)
+void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilename,uint64_t threadNum, uint64_t numCores)//,vector<point> allPoints)//in case we want to test our brtueforce in comparison
 {
   uint64_t i = 0;
   uint64_t j=0;
-  int dC = 0;
+  uint64_t dC = 0;
+  uint64_t counter=0;
   float val;
   ifstream file (filename, ios::in|ios::binary);
-  ofstream fileR(rfilename, ios::out|ios::binary);
-  uint64_t resultFileLoc = offset/numIters;
+  uint64_t resultFileLoc;
+  ofstream fileR;
+  if(threadNum==0)
+    {
+      resultFileLoc = ogOffset;
+    }
+  else
+    {
+      resultFileLoc = ogOffset+(numQueries/numCores)*threadNum*(kNum);
+      //printf("\nHELLO%lu\n",resultFileLoc);
+    }
   char name[8] = "RESULT0";
   name[7]='0';
-  
-  if(resultFileLoc == 0)
+
+  fileR.open(rfilename, ios::out|ios::binary);
+  if(threadNum == 0)
     {
+      //cerr<<"WEWRITINGINHERE";
+      //file.write((char *) &type,sizeof(type));
       fileR.write((char *) &name,sizeof(name));
       fileR.write((char *) &inputID,sizeof(inputID));
       fileR.write((char *) &queryID,sizeof(queryID));
@@ -90,10 +103,11 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
       fileR.write((char *) &numDimensions,sizeof(numDimensions));
       fileR.write((char *) &kNum,sizeof(kNum));
     }
-  const uint64_t offsetPerPoint = kNum*numDimensions*5;//size of each entry in results
+ 
   //cerr<<offset<<endl;
   file.seekg(offset);
-  fileR.seekp(ogOffset+resultFileLoc*numPoints*offsetPerPoint);
+  
+  //fileR.close();
   while(i<numPoints)
   {
 
@@ -110,21 +124,29 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
       j++;
     }
     point query = point(numDimensions,vals);
-
     vector<point> knn = getKNearestNeighbors(query);
     
-    /*printf("%f,%f with NN \n",query.values[0],query.values[1]);
-    dC=0;
-    while(dC<kNum)
-    {
-      float x = calcDist(query,knn[dC]);
-      printf("%f,%f with dist %f\n",knn[dC].values[0],knn[dC].values[1],x);
-      ++dC;
-    }*/
+    /*printf("%f,%f with NN \n",query.values[0],query.values[1]);*/
+    fileR.seekp(resultFileLoc);
+    counter=0;
+    while(counter<kNum)
+      {
+	dC=0;
+	//printf("\nPoint: ");
+	while(dC<numDimensions)
+	  {
+	    //printf("%f, ",knn[counter].values[dC]);
+	    fileR.write((char *) &knn[counter].values[dC],sizeof(knn[counter].values[dC]));
+	    dC++;
+	  }
+	counter++;
+      }
 
+    //testKNN(allPoints,query,kNum);//only if we want to test our brute force in comparison
     j=0;
     ++i;
   }
+  fileR.close();
   cerr<<"handled "<<i<<" points";
 }
 
@@ -156,7 +178,7 @@ vector<point> getKNearestNeighbors(point query)
 
 vector< pair<float,int>> getMinPoints(vector<point> og,point query)
 {
-  int i = 0;
+  uint64_t i = 0;
   vector< pair<float,int>> SI;//sorted indexes
   while(i<og.size())
   {
@@ -190,7 +212,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
     }
     if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[kNum-1])) //see if the point here is any good
     {
-      int i = 0;
+      uint64_t i = 0;
       while(i<newCurrPoints.size())
       {
         if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[i]))
@@ -222,7 +244,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
     }
     if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[kNum-1]))
     {
-      int i = 0;
+      uint64_t i = 0;
       while(i<newCurrPoints.size())
       {
         if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[i]))
@@ -237,7 +259,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
   }
   else if(node->left==NULL && node->right == NULL)
   {
-    int i =0;
+    uint64_t i =0;
     int sz= node->allPoints.size();
     int sz2;
     vector< pair<float,int>> minPoints = getMinPoints(node->allPoints,query);
@@ -294,7 +316,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
   return newCurrPoints;
 
 }
-void readQueries(string filename, uint64_t numCores,KDTree * root,string rname)
+void readQueries(string filename, uint64_t numCores,KDTree * root,string rname,vector<point> allPoints)
 {
   //below code on getting random value was taken from https://stackoverflow.com/questions/35726331/c-extracting-random-numbers-from-dev-urandom
   //Declare value to store data into
@@ -344,10 +366,10 @@ void readQueries(string filename, uint64_t numCores,KDTree * root,string rname)
   }
   while(numThreads<numCores-1)//leave remaining points to last thread
   {
-    readers[numThreads]= thread(readPoints,inputFileoffset+numThreads*offsetData,numIters,filename,rname);
+    readers[numThreads]= thread(readPoints,inputFileoffset+numThreads*offsetData,numIters,filename,rname,numThreads,numCores);
     numThreads++;
   }
-  readers[numThreads]=thread(readPoints,inputFileoffset+numThreads*offsetData,numQueries-numIters*numThreads,filename,rname);//these are the remaining points
+  readers[numThreads]=thread(readPoints,inputFileoffset+numThreads*offsetData,numQueries-numIters*numThreads,filename,rname,numThreads,numCores);//these are the remaining points
 
   numThreads=0;
   while (numThreads<numCores)
@@ -355,7 +377,8 @@ void readQueries(string filename, uint64_t numCores,KDTree * root,string rname)
     readers[numThreads].join();
     numThreads++;
   }
-
+  //writeBinary("yuh");
+  readResults(rname);
   /*vector<point> points;
   while(!file.eof())
   {
@@ -375,14 +398,11 @@ void readQueries(string filename, uint64_t numCores,KDTree * root,string rname)
   //printf("Point: %u %u\n",points[0].values[0],points[0].values[1]);
   //delete &points;
 }
-void writeResults(string filename)
-{
 
-}
 void writeBinary(string filename)
 {
   ofstream file;
-  char type[8] = "TRAIN";
+  char type[8] = "RESULT";
   uint64_t numEntries = 100;
   uint64_t numDim = 4;
   uint32_t x1 = 1;
@@ -398,4 +418,40 @@ void writeBinary(string filename)
   file.write((char *) &y1,sizeof(y1));
   file.write((char *) &z1,sizeof(z1));
   file.write((char *) &w1,sizeof(w1));
+}
+
+void readResults(string rfileName)
+{
+  //cerr<<"wut";
+  ifstream file (rfileName, ios::in|ios::binary);
+  char type[8]; // may want to generalize this;
+  uint64_t inptID;
+  uint64_t querID;
+  uint64_t resultID;
+  uint64_t nQ;
+  uint64_t nD;
+  uint64_t knn;
+  file.read(reinterpret_cast<char *>(&type),sizeof(type));
+  type[7]='\0';
+  file.read(reinterpret_cast<char *>(&inptID),sizeof(inptID));
+  file.read(reinterpret_cast<char *>(&querID),sizeof(querID));
+  file.read(reinterpret_cast<char *>(&resultID),sizeof(resultID));
+  file.read(reinterpret_cast<char *>(&nQ),sizeof(nQ));
+  file.read(reinterpret_cast<char *>(&nD),sizeof(nD));
+  file.read(reinterpret_cast<char *>(&knn),sizeof(knn));
+  printf("\nHeader: %s %lu %lu %lu %lu %lu %lu\n",type,inptID, querID,resultID, nQ,nD,knn);
+  float x1;
+  float y1;
+  int i = 0;
+  if(debug==0)
+    {
+      while(i<30)
+	{
+	  file.read(reinterpret_cast<char *>(&x1),sizeof(x1));
+	  file.read(reinterpret_cast<char *>(&y1),sizeof(y1));
+	  ++i;
+	  printf("\n%f,%f\n",x1,y1);
+	}
+    }
+  
 }

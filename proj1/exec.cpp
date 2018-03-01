@@ -24,7 +24,7 @@ int main(int argc, char ** argv)
   uint64_t n_cores;
   vector<point>  points;
   n_cores = atoi(argv[1]);
-  points = readInput(argv[2],n_cores);
+  points = readInput(argv[2]);
   std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
   unique_ptr<KDTree> head = buildTree(points,n_cores);
   std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now();
@@ -35,11 +35,13 @@ int main(int argc, char ** argv)
     //printf("points in head %lu, with depth %i\n", head->allPoints.size(),i);
     printf("avg depth %lu\n", avgDepth(head.get()));
   }
+  vector<point> pointless;//place holder for as long as we arent debugging
   beforeBuild = std::chrono::high_resolution_clock::now();
-  readQueries(argv[3],n_cores,head.get(),argv[4]);
+  readQueries(argv[3],n_cores,head.get(),argv[4],pointless);
   afterBuild = std::chrono::high_resolution_clock::now();
   timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
   cerr<<"it took " << timeElapsed.count() << " seconds to solve queries";
+  
   //writeBinary(argv[4]);
 }
 
