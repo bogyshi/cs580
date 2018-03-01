@@ -12,7 +12,7 @@ uint64_t numIters;
 //vector<point> knn;
 const uint64_t ogOffset = 56;
 uint64_t ID = 0;
-bool debug = 1;
+bool debug = 0;
 mutex vectorMutex;
 static KDTree * head;
 
@@ -87,9 +87,8 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
       resultFileLoc = ogOffset+(numQueries/numCores)*threadNum*(kNum);
       //printf("\nHELLO%lu\n",resultFileLoc);
     }
-  char name[8] = "RESULT0";
-  name[7]='0';
-
+  char name[8] = "RESULT";
+  
   fileR.open(rfilename, ios::out|ios::binary);
   if(threadNum == 0)
     {
@@ -103,10 +102,13 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
       fileR.write((char *) &numDimensions,sizeof(numDimensions));
       fileR.write((char *) &kNum,sizeof(kNum));
     }
- 
+  else
+    {
+       fileR.seekp(resultFileLoc);
+    }
   //cerr<<offset<<endl;
   file.seekg(offset);
-  
+ 
   //fileR.close();
   while(i<numPoints)
   {
@@ -127,7 +129,7 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
     vector<point> knn = getKNearestNeighbors(query);
     
     /*printf("%f,%f with NN \n",query.values[0],query.values[1]);*/
-    fileR.seekp(resultFileLoc);
+    
     counter=0;
     while(counter<kNum)
       {
@@ -443,9 +445,9 @@ void readResults(string rfileName)
   float x1;
   float y1;
   int i = 0;
-  if(debug==0)
+  if(debug==1)
     {
-      while(i<30)
+      while(i<10)
 	{
 	  file.read(reinterpret_cast<char *>(&x1),sizeof(x1));
 	  file.read(reinterpret_cast<char *>(&y1),sizeof(y1));

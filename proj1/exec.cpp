@@ -25,9 +25,25 @@ int main(int argc, char ** argv)
   vector<point>  points;
   n_cores = atoi(argv[1]);
   points = readInput(argv[2]);
+  KDTree t;
+  point p;
+  cerr<<sizeof(p)<<endl;
+  cerr<<sizeof(t)<<endl;
   std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
   unique_ptr<KDTree> head = buildTree(points,n_cores);
   std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now();
+  struct mallinfo mi = mallinfo();
+  //the below was stolen from the manpage on mallinfo
+  printf("Total non-mmapped bytes (arena):       %d\n", mi.arena);
+  printf("# of free chunks (ordblks):            %d\n", mi.ordblks);
+  printf("# of free fastbin blocks (smblks):     %d\n", mi.smblks);
+  printf("# of mapped regions (hblks):           %d\n", mi.hblks);
+  printf("Bytes in mapped regions (hblkhd):      %d\n", mi.hblkhd);
+  printf("Max. total allocated space (usmblks):  %d\n", mi.usmblks);
+  printf("Free bytes held in fastbins (fsmblks): %d\n", mi.fsmblks);
+  printf("Total allocated space (uordblks):      %d\n", mi.uordblks);
+  printf("Total free space (fordblks):           %d\n", mi.fordblks);
+  printf("Topmost releasable block (keepcost):   %d\n", mi.keepcost);
   std::chrono::duration<double> timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
   cerr<<"it took " << timeElapsed.count() << " seconds to build the tree";
   if (debug == 1)
