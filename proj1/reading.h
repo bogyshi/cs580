@@ -8,6 +8,7 @@
 #include "point.h"
 #include "KDTree.h"
 #include <cmath>
+#include <mutex>
 std::vector<point> readInput(std::string filename);
 void readQueries(std::string filename,std::uint64_t numCores,KDTree *,std::string rname,std::vector<point>);
 void writeBinary(std::string filename);

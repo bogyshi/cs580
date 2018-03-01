@@ -13,7 +13,7 @@ uint64_t numIters;
 const uint64_t ogOffset = 56;
 uint64_t ID = 0;
 bool debug = 1;
-
+mutex vectorMutex;
 static KDTree * head;
 
 vector<point> readInput(string filename)
