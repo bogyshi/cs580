@@ -6,12 +6,10 @@
 class point
 {
   public:
-    uint64_t numDim;
     std::vector<float> values;
     point(uint64_t nDim, float * vals);
     point();
     point(const point &);
-    ~point();
 
 };
 

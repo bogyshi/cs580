@@ -27,7 +27,7 @@ int main(int argc, char ** argv)
   points = readInput(argv[2]);
   KDTree t;
   point p;
-  cerr<<sizeof(p)<<endl;
+  cerr<<"SIZE"<<sizeof(p)<<endl;
   cerr<<sizeof(t)<<endl;
   std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
   unique_ptr<KDTree> head = buildTree(points,n_cores);
@@ -57,7 +57,7 @@ int main(int argc, char ** argv)
   afterBuild = std::chrono::high_resolution_clock::now();
   timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
   cerr<<"it took " << timeElapsed.count() << " seconds to solve queries";
-  
+
   //writeBinary(argv[4]);
 }
 

@@ -2,7 +2,6 @@
 #include <cstring>
 point::point(uint64_t nDim, float * vals)
 {
-  numDim=nDim;
   unsigned int i = 0;
   for (;i<nDim;i++)
   {
@@ -15,21 +14,15 @@ point::point(uint64_t nDim, float * vals)
 }
 point::point()
 {
-  numDim=0;
+
 
 }
 point::point(const point &p)
 {
-  numDim=p.numDim;
   unsigned int i = 0;
-  for (;i<numDim;i++)
+  for (;i<p.values.size();i++)
   {
     values.push_back(p.values[i]);
 
   }
-}
-point::~point()
-{
-
-
 }

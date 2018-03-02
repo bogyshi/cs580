@@ -75,7 +75,7 @@ unique_ptr<KDTree> buildTree(vector<point> points,uint64_t nCores)
   thread builders[numCores];
   while(i<maxThreads)
   {
-    builders[i] = thread(completeTree,points[0].numDim);
+    builders[i] = thread(completeTree,points[0].values.size());
     ++i;
   }
 
