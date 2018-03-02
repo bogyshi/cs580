@@ -47,15 +47,16 @@ unique_ptr<KDTree> buildTree(vector<point> points,uint64_t nCores)
   {
     if(points[i].values[0]<val)
     {
-      leftPoints.push_back(points[i]);
+      leftPoints.push_back(move(points[i]));
     }
     else if(points[i].values[0]>val)
     {
-      rightPoints.push_back(points[i]);
+      rightPoints.push_back(move(points[i]));
     }
     else
     {
-      head->allPoints.push_back(points[i]);
+      cerr<<"!!!";
+      head->allPoints.push_back(move(points[i]));
       //head->numPoints++;
     }
     ++i;
@@ -149,6 +150,7 @@ void completeTree(uint64_t numDim)
     if(workAvailable==0 && availableThreads==maxThreads)
     {
       lck.unlock();
+      workToDo.notify_one();
       break;
     }
     pair<KDTree *, vector<point>> temp = workingQueue.front();
@@ -170,15 +172,15 @@ void completeTree(uint64_t numDim)
       {
         if(points[i].values[head->splitDim]<val)
         {
-          leftPoints.push_back(points[i]);
+          leftPoints.push_back(move(points[i]));
         }
         else if(points[i].values[head->splitDim]>val)
         {
-          rightPoints.push_back(points[i]);
+          rightPoints.push_back(move(points[i]));
         }
         else
         {
-          head->allPoints.push_back(points[i]);
+          head->allPoints.push_back(move(points[i]));
           //head->numPoints++;
         }
         ++i;

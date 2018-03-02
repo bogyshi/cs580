@@ -1,6 +1,7 @@
 #include <vector>
 #include <stdint.h>
 #include <cstddef>
+#include <iostream>
 #ifndef POINT_H
 #define POINT_H
 class point
@@ -9,6 +10,7 @@ class point
     std::vector<float> values;
     point(uint64_t nDim, float * vals);
     point();
+    //point(point &&);
     point(const point &);
 
 };

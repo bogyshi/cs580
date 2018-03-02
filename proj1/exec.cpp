@@ -24,11 +24,11 @@ int main(int argc, char ** argv)
   uint64_t n_cores;
   vector<point>  points;
   n_cores = atoi(argv[1]);
+  std::chrono::high_resolution_clock::time_point beforeRead = std::chrono::high_resolution_clock::now();
   points = readInput(argv[2]);
-  KDTree t;
-  point p;
-  cerr<<"SIZE"<<sizeof(p)<<endl;
-  cerr<<sizeof(t)<<endl;
+  std::chrono::high_resolution_clock::time_point afterRead = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> timeRead = std::chrono::duration_cast<std::chrono::duration<double>>(afterRead-beforeRead);
+  printf("it took %f seconds to read the tree",timeRead.count());
   std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
   unique_ptr<KDTree> head = buildTree(points,n_cores);
   std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now();
@@ -45,6 +45,7 @@ int main(int argc, char ** argv)
   printf("Total free space (fordblks):           %d\n", mi.fordblks);
   printf("Topmost releasable block (keepcost):   %d\n", mi.keepcost);
   std::chrono::duration<double> timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
+
   cerr<<"it took " << timeElapsed.count() << " seconds to build the tree";
   if (debug == 1)
   {

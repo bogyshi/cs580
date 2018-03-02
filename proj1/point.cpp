@@ -19,10 +19,5 @@ point::point()
 }
 point::point(const point &p)
 {
-  unsigned int i = 0;
-  for (;i<p.values.size();i++)
-  {
-    values.push_back(p.values[i]);
-
-  }
+  values=std::move(p.values);
 }
