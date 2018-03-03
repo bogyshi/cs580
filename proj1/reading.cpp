@@ -170,6 +170,7 @@ float calcDist(point p1, point p2)
   {
     sumDist+=pow(p1.values[i]-p2.values[i],2.0);
     i++;
+    cerr<<sumDist<<endl;
   }
   if(sqrt(sumDist)<=0)
   {
