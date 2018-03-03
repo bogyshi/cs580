@@ -15,7 +15,7 @@ static uint64_t workAvailable; //locked by mutex mx
 static queue< pair<KDTree *, vector<point>>> workingQueue; // locked by mutex mx
 static uint64_t numCores;
 static uint64_t maxThreads;
-static const debug;
+static const bool debug=0;
 static const float samplePercent = 0.10;
 mutex mx;
 //shared_mutex numThreads;
