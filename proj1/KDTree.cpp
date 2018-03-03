@@ -175,15 +175,15 @@ void completeTree(uint64_t numDim)
       {
         if(points[i].values[head->splitDim]<val)
         {
-          leftPoints.push_back((points[i]));
+          leftPoints.push_back(move(points[i]));
         }
         else if(points[i].values[head->splitDim]>val)
         {
-          rightPoints.push_back((points[i]));
+          rightPoints.push_back(move(points[i]));
         }
         else
         {
-          head->allPoints.push_back((points[i]));
+          head->allPoints.push_back(move(points[i]));
           //head->numPoints++;
         }
         ++i;
@@ -214,7 +214,7 @@ void completeTree(uint64_t numDim)
       //cerr<<points[0].values[0];
       for (point p : points)
       {
-        head->allPoints.push_back((p));
+        head->allPoints.push_back(move(p));
       }
       lck.lock();
       availableThreads++;
