@@ -18,6 +18,7 @@ static KDTree * head;
 
 vector<point> readInput(string filename)
 {
+  //std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
   inputFile = filename;
   ifstream file (inputFile, ios::in|ios::binary);
   char type[8];
@@ -52,10 +53,18 @@ vector<point> readInput(string filename)
       //cerr<<"wut";
       break;
     }
+
+
     points.push_back(point(numDimensions,vals)); //IS THIS ALLOWED?!??!?!?!!?
+
+
+
+
     //printf("Point: %f %f\n",vals[0],vals[1]);
   }
-
+  //std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now();
+  //std::chrono::duration<double> timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
+  //cerr<<"it took " << timeElapsed.count() << " seconds read the tree";
   if(points.size()!=numEntries)
     {
       cerr<<"something happened reading in this stuff";
@@ -125,10 +134,11 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
       vals[j]=val;
       j++;
     }
-    point query = point(numDimensions,vals);
-    vector<point> knn = getKNearestNeighbors(query);
+    point p = point(numDimensions,vals);
+    auto query = make_unique<point>(p);
+    vector<point> knn = getKNearestNeighbors(*query.get());
 
-    /*printf("%f,%f with NN \n",query.values[0],query.values[1]);*/
+    //printf("%f,%f with NN \n",query.get()->values[0],query.get()->values[1]);
 
     counter=0;
     while(counter<kNum)
@@ -160,6 +170,7 @@ float calcDist(point p1, point p2)
   {
     sumDist+=pow(p1.values[i]-p2.values[i],2.0);
     i++;
+
   }
   if(sqrt(sumDist)<=0)
   {
@@ -169,7 +180,7 @@ float calcDist(point p1, point p2)
   return (float)sqrt(sumDist);
 }
 
-vector<point> getKNearestNeighbors(point query)
+vector<point> getKNearestNeighbors(point &query)
 {
   KDTree * root = head;
   uint64_t DS=0;
@@ -219,7 +230,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[i]))
         {
-          newCurrPoints.insert(newCurrPoints.begin()+i,node->allPoints[0]);
+          newCurrPoints.insert(newCurrPoints.begin()+i,(node->allPoints[0]));
           break;
         }
         ++i;
@@ -251,7 +262,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[i]))
         {
-          newCurrPoints.insert(newCurrPoints.begin()+i,node->allPoints[0]);
+          newCurrPoints.insert(newCurrPoints.begin()+i,(node->allPoints[0]));
           break;
         }
         ++i;
@@ -270,7 +281,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       while(currPoints.size()<=kNum && i < node->allPoints.size())
       {
         //cerr<<"beg"<<minPoints[i].second<<"end"<<endl;
-        newCurrPoints.push_back(node->allPoints[minPoints[i].second]);
+        newCurrPoints.push_back((node->allPoints[minPoints[i].second]));
         ++i;
       }
     }
@@ -283,12 +294,12 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         if(calcDist(query,node->allPoints[minPoints[x].second])<calcDist(query,currPoints[y]) )
         {
-          newCurrPoints.push_back(node->allPoints[minPoints[x].second]);
+          newCurrPoints.push_back((node->allPoints[minPoints[x].second]));
           ++x;
         }
         else
         {
-          newCurrPoints.push_back(currPoints[y]);
+          newCurrPoints.push_back((currPoints[y]));
           ++y;
         }
       }
@@ -300,7 +311,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         while(y<sz2 && newCurrPoints.size()<kNum)
         {
-          newCurrPoints.push_back(currPoints[y]);
+          newCurrPoints.push_back((currPoints[y]));
           ++y;
         }
       }
@@ -308,7 +319,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         while(x<sz && newCurrPoints.size()<kNum)
         {
-          newCurrPoints.push_back(node->allPoints[minPoints[x].second]);
+          newCurrPoints.push_back((node->allPoints[minPoints[x].second]));
           ++x;
         }
       }
@@ -329,7 +340,7 @@ void readQueries(string filename, uint64_t numCores,KDTree * root,string rname,v
       urandom.read(reinterpret_cast<char*>(&ID), size); //Read from urandom
       if(urandom) //Check if stream is ok, read succeeded
         {
-	  std::cout << "Read random value: " << ID << std::endl;
+	  //std::cout << "Read random value: " << ID << std::endl;
         }
       else //Read failed
         {
@@ -380,7 +391,7 @@ void readQueries(string filename, uint64_t numCores,KDTree * root,string rname,v
     numThreads++;
   }
   //writeBinary("yuh");
-  readResults(rname);
+  //readResults(rname);
   /*vector<point> points;
   while(!file.eof())
   {
@@ -445,15 +456,15 @@ void readResults(string rfileName)
   float x1;
   float y1;
   int i = 0;
-  if(debug==1)
+  if(debug==0)
     {
       while(i<10)
-	{
-	  file.read(reinterpret_cast<char *>(&x1),sizeof(x1));
-	  file.read(reinterpret_cast<char *>(&y1),sizeof(y1));
-	  ++i;
-	  printf("\n%f,%f\n",x1,y1);
-	}
+	     {
+    	   file.read(reinterpret_cast<char *>(&x1),sizeof(x1));
+	       file.read(reinterpret_cast<char *>(&y1),sizeof(y1));
+	       ++i;
+	       printf("\n%f,%f\n",x1,y1);
+	     }
     }
 
 }

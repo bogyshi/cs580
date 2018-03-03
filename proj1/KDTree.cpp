@@ -15,6 +15,7 @@ static uint64_t workAvailable; //locked by mutex mx
 static queue< pair<KDTree *, vector<point>>> workingQueue; // locked by mutex mx
 static uint64_t numCores;
 static uint64_t maxThreads;
+static const bool debug=1;
 static const float samplePercent = 0.10;
 mutex mx;
 //shared_mutex numThreads;
@@ -47,15 +48,15 @@ unique_ptr<KDTree> buildTree(vector<point> points,uint64_t nCores)
   {
     if(points[i].values[0]<val)
     {
-      leftPoints.push_back(points[i]);
+      leftPoints.push_back((points[i]));
     }
     else if(points[i].values[0]>val)
     {
-      rightPoints.push_back(points[i]);
+      rightPoints.push_back((points[i]));
     }
     else
     {
-      head->allPoints.push_back(points[i]);
+      head->allPoints.push_back((points[i]));
       //head->numPoints++;
     }
     ++i;
@@ -112,18 +113,21 @@ unique_ptr<KDTree> buildTree(vector<point> points,uint64_t nCores)
   {
     printf("ERROR: all threads done working but no work available?!");
   }
-  struct mallinfo mi = mallinfo();
-  //the below was stolen from the manpage on mallinfo
-  printf("Total non-mmapped bytes (arena):       %d\n", mi.arena);
-  printf("# of free chunks (ordblks):            %d\n", mi.ordblks);
-  printf("# of free fastbin blocks (smblks):     %d\n", mi.smblks);
-  printf("# of mapped regions (hblks):           %d\n", mi.hblks);
-  printf("Bytes in mapped regions (hblkhd):      %d\n", mi.hblkhd);
-  printf("Max. total allocated space (usmblks):  %d\n", mi.usmblks);
-  printf("Free bytes held in fastbins (fsmblks): %d\n", mi.fsmblks);
-  printf("Total allocated space (uordblks):      %d\n", mi.uordblks);
-  printf("Total free space (fordblks):           %d\n", mi.fordblks);
-  printf("Topmost releasable block (keepcost):   %d\n", mi.keepcost);
+  if(debug==0)
+  {
+    struct mallinfo mi = mallinfo();
+    //the below was stolen from the manpage on mallinfo
+    printf("Total non-mmapped bytes (arena):       %d\n", mi.arena);
+    printf("# of free chunks (ordblks):            %d\n", mi.ordblks);
+    printf("# of free fastbin blocks (smblks):     %d\n", mi.smblks);
+    printf("# of mapped regions (hblks):           %d\n", mi.hblks);
+    printf("Bytes in mapped regions (hblkhd):      %d\n", mi.hblkhd);
+    printf("Max. total allocated space (usmblks):  %d\n", mi.usmblks);
+    printf("Free bytes held in fastbins (fsmblks): %d\n", mi.fsmblks);
+    printf("Total allocated space (uordblks):      %d\n", mi.uordblks);
+    printf("Total free space (fordblks):           %d\n", mi.fordblks);
+    printf("Topmost releasable block (keepcost):   %d\n", mi.keepcost);
+  }
   return head;
 }
 
@@ -149,6 +153,7 @@ void completeTree(uint64_t numDim)
     if(workAvailable==0 && availableThreads==maxThreads)
     {
       lck.unlock();
+      workToDo.notify_one();
       break;
     }
     pair<KDTree *, vector<point>> temp = workingQueue.front();
@@ -170,15 +175,15 @@ void completeTree(uint64_t numDim)
       {
         if(points[i].values[head->splitDim]<val)
         {
-          leftPoints.push_back(points[i]);
+          leftPoints.push_back((points[i]));
         }
         else if(points[i].values[head->splitDim]>val)
         {
-          rightPoints.push_back(points[i]);
+          rightPoints.push_back((points[i]));
         }
         else
         {
-          head->allPoints.push_back(points[i]);
+          head->allPoints.push_back((points[i]));
           //head->numPoints++;
         }
         ++i;
@@ -207,7 +212,10 @@ void completeTree(uint64_t numDim)
     else
     {
       //cerr<<points[0].values[0];
-      head->allPoints = points;
+      for (point p : points)
+      {
+        head->allPoints.push_back((p));
+      }
       lck.lock();
       availableThreads++;
       lck.unlock();
