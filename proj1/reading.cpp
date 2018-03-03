@@ -43,7 +43,7 @@ vector<point> readInput(string filename)
     j=0;
     while(j<numDimensions)
       {
-	file.read(reinterpret_cast<char *>(&val),sizeof(float));
+	file.read(reinterpret_cast<char *>(&val),sizeof(val));
 	vals[j]=val;
 	j++;
       }
@@ -215,7 +215,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
     }
     else // check difference between splitDimension points, we have enough neighboors, but maybe there is more to go
     {
-      if(query.values[DS] - node->allPoints[0].values[DS] < calcDist(query,newCurrPoints[kNum-1]))//distance means there could be a point closer on the other side!
+      if(query.values[DS] - node->allPoints[0].values[DS] < calcDist(query,newCurrPoints[newCurrPoints.size()-1]))//distance means there could be a point closer on the other side!
       {
         if(node->left!=NULL)
         {
@@ -223,7 +223,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
         }
       }
     }
-    if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[kNum-1])) //see if the point here is any good
+    if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[newCurrPoints.size()-1])) //see if the point here is any good
     {
       uint64_t i = 0;
       while(i<newCurrPoints.size())
@@ -247,7 +247,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
     }
     else // check difference between splitDimension points
     {
-      if(query.values[DS] - node->allPoints[0].values[DS] < calcDist(query,newCurrPoints[kNum-1]))//distance means there could be a point closer on the other side!
+      if(query.values[DS] - node->allPoints[0].values[DS] < calcDist(query,newCurrPoints[newCurrPoints.size()-1]))//distance means there could be a point closer on the other side!
       {
         if(node->right!=NULL)
         {
@@ -255,7 +255,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
         }
       }
     }
-    if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[kNum-1]))
+    if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[newCurrPoints.size()-1]))
     {
       uint64_t i = 0;
       while(i<newCurrPoints.size())
