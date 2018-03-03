@@ -230,7 +230,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[i]))
         {
-          newCurrPoints.insert(newCurrPoints.begin()+i,node->allPoints[0]);
+          newCurrPoints.insert(newCurrPoints.begin()+i,move(node->allPoints[0]));
           break;
         }
         ++i;
@@ -262,7 +262,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[i]))
         {
-          newCurrPoints.insert(newCurrPoints.begin()+i,node->allPoints[0]);
+          newCurrPoints.insert(newCurrPoints.begin()+i,move(node->allPoints[0]));
           break;
         }
         ++i;
