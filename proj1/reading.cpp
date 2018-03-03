@@ -170,7 +170,7 @@ float calcDist(point p1, point p2)
   {
     sumDist+=pow(p1.values[i]-p2.values[i],2.0);
     i++;
-    
+
   }
   if(sqrt(sumDist)<=0)
   {
@@ -230,7 +230,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[i]))
         {
-          newCurrPoints.insert(newCurrPoints.begin()+i,(node->allPoints[0]));
+          newCurrPoints.insert(newCurrPoints.begin()+i,move(node->allPoints[0]));
           break;
         }
         ++i;
@@ -262,7 +262,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[i]))
         {
-          newCurrPoints.insert(newCurrPoints.begin()+i,(node->allPoints[0]));
+          newCurrPoints.insert(newCurrPoints.begin()+i,move(node->allPoints[0]));
           break;
         }
         ++i;
@@ -281,7 +281,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       while(currPoints.size()<=kNum && i < node->allPoints.size())
       {
         //cerr<<"beg"<<minPoints[i].second<<"end"<<endl;
-        newCurrPoints.push_back((node->allPoints[minPoints[i].second]));
+        newCurrPoints.push_back(move(node->allPoints[minPoints[i].second]));
         ++i;
       }
     }
@@ -294,12 +294,12 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         if(calcDist(query,node->allPoints[minPoints[x].second])<calcDist(query,currPoints[y]) )
         {
-          newCurrPoints.push_back((node->allPoints[minPoints[x].second]));
+          newCurrPoints.push_back(move(node->allPoints[minPoints[x].second]));
           ++x;
         }
         else
         {
-          newCurrPoints.push_back((currPoints[y]));
+          newCurrPoints.push_back(move(currPoints[y]));
           ++y;
         }
       }
@@ -311,7 +311,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         while(y<sz2 && newCurrPoints.size()<kNum)
         {
-          newCurrPoints.push_back((currPoints[y]));
+          newCurrPoints.push_back(move(currPoints[y]));
           ++y;
         }
       }
@@ -319,7 +319,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       {
         while(x<sz && newCurrPoints.size()<kNum)
         {
-          newCurrPoints.push_back((node->allPoints[minPoints[x].second]));
+          newCurrPoints.push_back(move(node->allPoints[minPoints[x].second]));
           ++x;
         }
       }
