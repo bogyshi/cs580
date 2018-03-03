@@ -1,7 +1,7 @@
 all: exec
 
 exec: exec.o reading.o point.o KDTree.o
-	g++ -O3 -std=c++17 -pthread -g -o exec exec.o reading.o point.o KDTree.o
+	g++ -std=c++17 -pthread -g -o exec exec.o reading.o point.o KDTree.o
 
 point.o: point.h
 	g++ -std=c++17 -pthread -g -c -o point.o point.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align

@@ -15,7 +15,7 @@ std::vector<point> readInput(std::string filename);
 void readQueries(std::string filename,std::uint64_t numCores,KDTree *,std::string rname,std::vector<point>);
 void writeBinary(std::string filename);
 void readPoints(std::uint64_t offset,std::uint64_t numPoints,std::string,std::string,uint64_t,uint64_t);
-std::vector<point> getKNearestNeighbors(point &query);
+std::vector<point> getKNearestNeighbors(point query);
 float calcDist(point p1, point p2);
 std::vector< std::pair<float,int>> getMinPoints(std::vector<point> og,point query);
 std::vector<point> recursiveKNN(KDTree * node, uint64_t DS, std::vector<point> currPoints,point query);
