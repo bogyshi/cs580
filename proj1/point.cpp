@@ -19,5 +19,8 @@ point::point()
 }
 point::point(const point &p)
 {
-  values=std::move(p.values);
+  for (float x: p.values)
+  {
+    values.push_back(std::move(x));
+  }
 }
