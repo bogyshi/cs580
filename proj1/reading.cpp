@@ -458,12 +458,12 @@ void readResults(string rfileName)
   if(debug==1)
     {
       while(i<10)
-	{
-	  file.read(reinterpret_cast<char *>(&x1),sizeof(x1));
-	  file.read(reinterpret_cast<char *>(&y1),sizeof(y1));
-	  ++i;
-	  printf("\n%f,%f\n",x1,y1);
-	}
+	     {
+    	   file.read(reinterpret_cast<char *>(&x1),sizeof(x1));
+	       file.read(reinterpret_cast<char *>(&y1),sizeof(y1));
+	       ++i;
+	       printf("\n%f,%f\n",x1,y1);
+	     }
     }
 
 }

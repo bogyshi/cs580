@@ -15,6 +15,7 @@ static uint64_t workAvailable; //locked by mutex mx
 static queue< pair<KDTree *, vector<point>>> workingQueue; // locked by mutex mx
 static uint64_t numCores;
 static uint64_t maxThreads;
+static const debug;
 static const float samplePercent = 0.10;
 mutex mx;
 //shared_mutex numThreads;
@@ -113,18 +114,21 @@ unique_ptr<KDTree> buildTree(vector<point> points,uint64_t nCores)
   {
     printf("ERROR: all threads done working but no work available?!");
   }
-  struct mallinfo mi = mallinfo();
-  //the below was stolen from the manpage on mallinfo
-  printf("Total non-mmapped bytes (arena):       %d\n", mi.arena);
-  printf("# of free chunks (ordblks):            %d\n", mi.ordblks);
-  printf("# of free fastbin blocks (smblks):     %d\n", mi.smblks);
-  printf("# of mapped regions (hblks):           %d\n", mi.hblks);
-  printf("Bytes in mapped regions (hblkhd):      %d\n", mi.hblkhd);
-  printf("Max. total allocated space (usmblks):  %d\n", mi.usmblks);
-  printf("Free bytes held in fastbins (fsmblks): %d\n", mi.fsmblks);
-  printf("Total allocated space (uordblks):      %d\n", mi.uordblks);
-  printf("Total free space (fordblks):           %d\n", mi.fordblks);
-  printf("Topmost releasable block (keepcost):   %d\n", mi.keepcost);
+  if(debug==1)
+  {
+    struct mallinfo mi = mallinfo();
+    //the below was stolen from the manpage on mallinfo
+    printf("Total non-mmapped bytes (arena):       %d\n", mi.arena);
+    printf("# of free chunks (ordblks):            %d\n", mi.ordblks);
+    printf("# of free fastbin blocks (smblks):     %d\n", mi.smblks);
+    printf("# of mapped regions (hblks):           %d\n", mi.hblks);
+    printf("Bytes in mapped regions (hblkhd):      %d\n", mi.hblkhd);
+    printf("Max. total allocated space (usmblks):  %d\n", mi.usmblks);
+    printf("Free bytes held in fastbins (fsmblks): %d\n", mi.fsmblks);
+    printf("Total allocated space (uordblks):      %d\n", mi.uordblks);
+    printf("Total free space (fordblks):           %d\n", mi.fordblks);
+    printf("Topmost releasable block (keepcost):   %d\n", mi.keepcost);
+  }
   return head;
 }
 
