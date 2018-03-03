@@ -213,7 +213,10 @@ void completeTree(uint64_t numDim)
     else
     {
       //cerr<<points[0].values[0];
-      head->allPoints = points;
+      for (point p : points)
+      {
+        head->allPoints.push_back(move(p));
+      }
       lck.lock();
       availableThreads++;
       lck.unlock();
