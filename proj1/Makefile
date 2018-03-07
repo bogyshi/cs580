@@ -13,7 +13,7 @@ reading.o: reading.h KDTree.h point.h
 	g++ -std=c++17 -pthread -g -c -o reading.o reading.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align
 
 exec.o: reading.h point.h
-	g++ -std=c++17 -pthread -g -c -o exec.o exec.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align
+	g++ -O3 -std=c++17 -pthread -g -c -o exec.o exec.cpp -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align
 
 .PHONY: clean
 clean:
