@@ -25,5 +25,6 @@ point::point(const point &p)
   {
     values.push_back(p.values[i]);
   }*/
+  //std::cerr<<"ytho"<<std::endl;
   values = move(p.values);
 }

@@ -9,7 +9,7 @@ using namespace std;
 random_device rd;
 mt19937 gen(rd());
 static uniform_int_distribution<uint64_t> dist(0,ULLONG_MAX);
-static const uint64_t THRESH = 10;
+static const uint64_t THRESH = 50;
 static uint64_t availableThreads; //locked by mutex mx
 static uint64_t workAvailable; //locked by mutex mx
 static queue< pair<KDTree *, vector<point>>> workingQueue; // locked by mutex mx
@@ -164,7 +164,7 @@ void completeTree(uint64_t numDim)
 
     vector<point> points = temp.second;
     KDTree * head = temp.first;
-    if(points.size()>5)
+    if(points.size()>THRESH)
     {
       val = sampledMedian(points,head->splitDim);
       i = 0;
@@ -259,7 +259,7 @@ float sampledMedian(vector<point> points, uint64_t DTS)//DTS=dimensionToSplit
   return holder[holder.size()/2];
 }
 
-void testKNN(std::vector<point> allPoints, point query, uint64_t kNN)
+void testKNN(std::vector<point> allPoints, point * query, uint64_t kNN)
 {
   uint64_t sz = allPoints.size();
   uint64_t counter = 0;
@@ -274,7 +274,7 @@ void testKNN(std::vector<point> allPoints, point query, uint64_t kNN)
 	  tempCounter=0;
 	  while(tempCounter<minPoints.size())
 	    {
-	      if(calcDist(query,allPoints[counter])<calcDist(query,minPoints[tempCounter]))
+	      if(calcDist(query,&allPoints[counter])<calcDist(query,&minPoints[tempCounter]))
 		{
 		  minPoints.insert(minPoints.begin()+tempCounter,allPoints[counter]);
 		  break;
@@ -282,12 +282,12 @@ void testKNN(std::vector<point> allPoints, point query, uint64_t kNN)
 	      tempCounter++;
 	    }
 	}
-      else if(calcDist(query,allPoints[counter])<calcDist(query,minPoints[minPoints.size()-1]))//it is a lesser weight than what we already have
+      else if(calcDist(query,&allPoints[counter])<calcDist(query,&minPoints[minPoints.size()-1]))//it is a lesser weight than what we already have
 	{
 	  tempCounter=0;
 	  while(tempCounter<minPoints.size())
 	    {
-	      if(calcDist(query,allPoints[counter])<calcDist(query,minPoints[tempCounter]))
+	      if(calcDist(query,&allPoints[counter])<calcDist(query,&minPoints[tempCounter]))
 		{
 		  minPoints.insert(minPoints.begin()+tempCounter,allPoints[counter]);
 		  minPoints.pop_back();
@@ -302,7 +302,7 @@ void testKNN(std::vector<point> allPoints, point query, uint64_t kNN)
   printf("\nBEGIN BRUTEFORCECALC\n");
   while(counter<minPoints.size())
     {
-      printf("%f,%f with dist %f\n",minPoints[counter].values[0],minPoints[counter].values[1],calcDist(query,minPoints[counter]));
+      printf("%f,%f with dist %f\n",minPoints[counter].values[0],minPoints[counter].values[1],calcDist(query,&minPoints[counter]));
       counter++;
     }
 }

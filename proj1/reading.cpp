@@ -136,7 +136,19 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
     }
     point p = point(numDimensions,vals);
     auto query = make_unique<point>(p);
-    vector<point> knn = getKNearestNeighbors(*query.get());
+    vector<point> knn;
+    if(debug==1)
+    {
+      std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
+      knn = getKNearestNeighbors(*query.get());
+      std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
+      cerr<<"it took " << timeElapsed.count() << " seconds to handle one point\n";
+    }
+    else
+    {
+      knn = getKNearestNeighbors(*query.get());
+    }
 
     //printf("%f,%f with NN \n",query.get()->values[0],query.get()->values[1]);
 
@@ -162,13 +174,13 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
   cerr<<"handled "<<i<<" points";
 }
 
-float calcDist(point p1, point p2)
+float calcDist(point * p1, point  * p2)
 {
   uint64_t i = 0;
   double sumDist = 0.0;
   while(i<numDimensions)
   {
-    sumDist+=pow(p1.values[i]-p2.values[i],2.0);
+    sumDist+=pow(p1->values[i]-p2->values[i],2.0);
     i++;
 
   }
@@ -185,17 +197,17 @@ vector<point> getKNearestNeighbors(point &query)
   KDTree * root = head;
   uint64_t DS=0;
   vector<point> og;
-  return recursiveKNN(root,DS,og,query);
+  return recursiveKNN(root,DS,og, &query);
 
 }
 
-vector< pair<float,int>> getMinPoints(vector<point> og,point query)
+vector< pair<float,int>> getMinPoints(vector<point> og,point * query)
 {
   uint64_t i = 0;
   vector< pair<float,int>> SI;//sorted indexes
   while(i<og.size())
   {
-    float temp = calcDist(query,og[i]);
+    float temp = calcDist(query,&og[i]);
     SI.push_back(pair<float,int>(temp,i));
     ++i;
   }
@@ -203,10 +215,10 @@ vector< pair<float,int>> getMinPoints(vector<point> og,point query)
   return SI;
 }
 
-vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,point query)
+vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,point  * query)
 {
   vector<point> newCurrPoints;
-  if(node->allPoints[0].values[DS]<query.values[DS] && node->right !=NULL)
+  if(node->allPoints[0].values[DS]<query->values[DS] && node->right !=NULL)
   {
     newCurrPoints = recursiveKNN(node->right.get(),(DS+1)%numDimensions,currPoints,query);
     if(newCurrPoints.size()<kNum && node->left!=NULL)//we havent found enough neighbors yet! go down the other branch
@@ -215,7 +227,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
     }
     else // check difference between splitDimension points, we have enough neighboors, but maybe there is more to go
     {
-      if(query.values[DS] - node->allPoints[0].values[DS] < calcDist(query,newCurrPoints[newCurrPoints.size()-1]))//distance means there could be a point closer on the other side!
+      if(query->values[DS] - node->allPoints[0].values[DS] < calcDist(query,&newCurrPoints[newCurrPoints.size()-1]))//distance means there could be a point closer on the other side!
       {
         if(node->left!=NULL)
         {
@@ -223,12 +235,12 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
         }
       }
     }
-    if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[newCurrPoints.size()-1])) //see if the point here is any good
+    if(calcDist(query,&node->allPoints[0]) < calcDist(query,&newCurrPoints[newCurrPoints.size()-1])) //see if the point here is any good
     {
       uint64_t i = 0;
       while(i<newCurrPoints.size())
       {
-        if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[i]))
+        if(calcDist(query,&node->allPoints[0]) < calcDist(query,&newCurrPoints[i]))
         {
           newCurrPoints.insert(newCurrPoints.begin()+i,move(node->allPoints[0]));
           break;
@@ -238,7 +250,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       newCurrPoints.pop_back();
     }
   }
-  else if(node->allPoints[0].values[DS]>query.values[DS] && node->left !=NULL)
+  else if(node->allPoints[0].values[DS]>query->values[DS] && node->left !=NULL)
   {
     newCurrPoints = recursiveKNN(node->left.get(),(DS+1)%numDimensions,currPoints,query);
     if(newCurrPoints.size()<kNum && node->right!=NULL)
@@ -247,7 +259,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
     }
     else // check difference between splitDimension points
     {
-      if(query.values[DS] - node->allPoints[0].values[DS] < calcDist(query,newCurrPoints[newCurrPoints.size()-1]))//distance means there could be a point closer on the other side!
+      if(query->values[DS] - node->allPoints[0].values[DS] < calcDist(query,&newCurrPoints[newCurrPoints.size()-1]))//distance means there could be a point closer on the other side!
       {
         if(node->right!=NULL)
         {
@@ -255,12 +267,12 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
         }
       }
     }
-    if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[newCurrPoints.size()-1]))
+    if(calcDist(query,&node->allPoints[0]) < calcDist(query,&newCurrPoints[newCurrPoints.size()-1]))
     {
       uint64_t i = 0;
       while(i<newCurrPoints.size())
       {
-        if(calcDist(query,node->allPoints[0]) < calcDist(query,newCurrPoints[i]))
+        if(calcDist(query,&node->allPoints[0]) < calcDist(query,&newCurrPoints[i]))
         {
           newCurrPoints.insert(newCurrPoints.begin()+i,move(node->allPoints[0]));
           break;
@@ -292,7 +304,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       int y=0;
       while(x<sz && y<sz2 && newCurrPoints.size()<kNum)
       {
-        if(calcDist(query,node->allPoints[minPoints[x].second])<calcDist(query,currPoints[y]) )
+        if(calcDist(query,&node->allPoints[minPoints[x].second])<calcDist(query,&currPoints[y]) )
         {
           newCurrPoints.push_back(move(node->allPoints[minPoints[x].second]));
           ++x;

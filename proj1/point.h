@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <cstddef>
 #include <iostream>
+#include <chrono>
+#include <ctime>
 #ifndef POINT_H
 #define POINT_H
 class point
