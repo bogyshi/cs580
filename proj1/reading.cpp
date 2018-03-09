@@ -14,6 +14,7 @@ const uint64_t ogOffset = 56;
 uint64_t ID = 0;
 static bool debug = 0;
 mutex vectorMutex;
+mutex plz;
 static KDTree * head;
 
 vector<point> readInput(string filename)
@@ -87,6 +88,9 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
   ifstream file (filename, ios::in|ios::binary);
   uint64_t resultFileLoc;
   ofstream fileR;
+  vector<vector<point> > holdResults;
+  vector<point> queries;
+  float vals[numDimensions];
   if(threadNum==0)
     {
       resultFileLoc = ogOffset;
@@ -97,32 +101,13 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
       //printf("\nHELLO%lu\n",resultFileLoc);
     }
   char name[8] = "RESULT";
-
-  fileR.open(rfilename, ios::out|ios::binary);
-  if(threadNum == 0)
-    {
-      //cerr<<"WEWRITINGINHERE";
-      //file.write((char *) &type,sizeof(type));
-      fileR.write((char *) &name,sizeof(name));
-      fileR.write((char *) &inputID,sizeof(inputID));
-      fileR.write((char *) &queryID,sizeof(queryID));
-      fileR.write((char *) &ID,sizeof(ID));
-      fileR.write((char *) &numQueries,sizeof(numQueries));
-      fileR.write((char *) &numDimensions,sizeof(numDimensions));
-      fileR.write((char *) &kNum,sizeof(kNum));
-    }
-  else
-    {
-       fileR.seekp(resultFileLoc);
-    }
   //cerr<<offset<<endl;
   file.seekg(offset);
-
+  
   //fileR.close();
+  
   while(i<numPoints)
   {
-
-    float vals[numDimensions];
     j=0;
     while(j<numDimensions)
     {
@@ -134,42 +119,79 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
       vals[j]=val;
       j++;
     }
-    point p = point(numDimensions,vals);
-    auto query = make_unique<point>(p);
+    queries.push_back(point(numDimensions,vals));
+    i++;
+  }
+  file.close();
+  
+  i=0;
+  std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
+  while(i<numPoints)
+  {
+    auto query = make_unique<point>(queries[i]);
     vector<point> knn;
     if(debug==1)
     {
-      std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
-      knn = getKNearestNeighbors(*query.get());
-      std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double> timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
-      cerr<<"it took " << timeElapsed.count() << " seconds to handle one point\n";
+      
+      holdResults.push_back(getKNearestNeighbors(*query.get()));
+      
     }
     else
     {
-      knn = getKNearestNeighbors(*query.get());
+      holdResults.push_back(getKNearestNeighbors(*query.get()));
     }
-
-    //printf("%f,%f with NN \n",query.get()->values[0],query.get()->values[1]);
-
-    counter=0;
-    while(counter<kNum)
-      {
-	dC=0;
-	//printf("\nPoint: ");
-	while(dC<numDimensions)
-	  {
-	    //printf("%f, ",knn[counter].values[dC]);
-	    fileR.write((char *) &knn[counter].values[dC],sizeof(knn[counter].values[dC]));
-	    dC++;
-	  }
-	counter++;
-      }
-
-    //testKNN(allPoints,query,kNum);//only if we want to test our brute force in comparison
-    j=0;
     ++i;
   }
+  std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
+  cerr<<"it took " << timeElapsed.count() << " seconds to handle ALL points\n";
+  fileR.open(rfilename, ios::out|ios::binary);
+  if(threadNum == 0)
+    {
+     
+      //cerr<<"WEWRITINGINHERE";
+      //file.write((char *) &type,sizeof(type));
+      fileR.write((char *) &name,sizeof(name));
+      fileR.write((char *) &inputID,sizeof(inputID));
+      fileR.write((char *) &queryID,sizeof(queryID));
+      fileR.write((char *) &ID,sizeof(ID));
+      fileR.write((char *) &numQueries,sizeof(numQueries));
+      fileR.write((char *) &numDimensions,sizeof(numDimensions));
+      fileR.write((char *) &kNum,sizeof(kNum));
+      //file looks good up to here
+      //fileR.close();
+      //readResults(rfilename);
+
+    }
+  else
+    {
+      fileR.seekp(resultFileLoc);
+    }
+  counter=0;
+  i = 0;
+  vector<point> knn;
+  while(i<numPoints)
+    {
+      knn = holdResults[i];
+      counter=0;
+      while(counter<kNum)
+	{
+	  dC=0;
+	  
+	  //printf("\nPoint: ");
+	  while(dC<numDimensions)
+	    {
+	      char * temp = (char *)&knn[counter].values[dC];
+	      //cerr<<temp<<endl;
+	      plz.lock();
+	      fileR.write(temp,sizeof(knn[counter].values[dC]));
+	      plz.unlock();
+	      dC++;
+	    }
+	  counter++;
+	}
+      i++;
+    }
   fileR.close();
   cerr<<"handled "<<i<<" points";
 }
