@@ -16,7 +16,7 @@ static bool debug = 0;
 mutex vectorMutex;
 mutex plz;
 static KDTree * head;
-
+vector<vector<point>>  * holdResults;
 vector<point> readInput(string filename)
 {
   //std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
@@ -82,30 +82,17 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
 {
   uint64_t i = 0;
   uint64_t j=0;
-  uint64_t dC = 0;
-  uint64_t counter=0;
   float val;
   ifstream file (filename, ios::in|ios::binary);
   uint64_t resultFileLoc;
-  ofstream fileR;
-  vector<vector<point> > holdResults;
+
+
   vector<point> queries;
   float vals[numDimensions];
-  if(threadNum==0)
-    {
-      resultFileLoc = ogOffset;
-    }
-  else
-    {
-      resultFileLoc = ogOffset+(numQueries/numCores)*threadNum*(kNum);
-      //printf("\nHELLO%lu\n",resultFileLoc);
-    }
-  char name[8] = "RESULT";
-  //cerr<<offset<<endl;
+
+
   file.seekg(offset);
-  
-  //fileR.close();
-  
+
   while(i<numPoints)
   {
     j=0;
@@ -123,76 +110,25 @@ void readPoints(uint64_t offset,uint64_t numPoints,string filename,string rfilen
     i++;
   }
   file.close();
-  
+
   i=0;
-  std::chrono::high_resolution_clock::time_point beforeBuild = std::chrono::high_resolution_clock::now();
   while(i<numPoints)
   {
     auto query = make_unique<point>(queries[i]);
     vector<point> knn;
     if(debug==1)
     {
-      
-      holdResults.push_back(getKNearestNeighbors(*query.get()));
-      
+
+      holdResults[threadNum].push_back(getKNearestNeighbors(*query.get()));
+
     }
     else
     {
-      holdResults.push_back(getKNearestNeighbors(*query.get()));
+      holdResults[threadNum].push_back(getKNearestNeighbors(*query.get()));
     }
     ++i;
   }
-  std::chrono::high_resolution_clock::time_point afterBuild = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> timeElapsed = std::chrono::duration_cast<std::chrono::duration<double>>(afterBuild-beforeBuild);
-  cerr<<"it took " << timeElapsed.count() << " seconds to handle ALL points\n";
-  fileR.open(rfilename, ios::out|ios::binary);
-  if(threadNum == 0)
-    {
-     
-      //cerr<<"WEWRITINGINHERE";
-      //file.write((char *) &type,sizeof(type));
-      fileR.write((char *) &name,sizeof(name));
-      fileR.write((char *) &inputID,sizeof(inputID));
-      fileR.write((char *) &queryID,sizeof(queryID));
-      fileR.write((char *) &ID,sizeof(ID));
-      fileR.write((char *) &numQueries,sizeof(numQueries));
-      fileR.write((char *) &numDimensions,sizeof(numDimensions));
-      fileR.write((char *) &kNum,sizeof(kNum));
-      //file looks good up to here
-      //fileR.close();
-      //readResults(rfilename);
 
-    }
-  else
-    {
-      fileR.seekp(resultFileLoc);
-    }
-  counter=0;
-  i = 0;
-  vector<point> knn;
-  while(i<numPoints)
-    {
-      knn = holdResults[i];
-      counter=0;
-      while(counter<kNum)
-	{
-	  dC=0;
-	  
-	  //printf("\nPoint: ");
-	  while(dC<numDimensions)
-	    {
-	      char * temp = (char *)&knn[counter].values[dC];
-	      //cerr<<temp<<endl;
-	      plz.lock();
-	      fileR.write(temp,sizeof(knn[counter].values[dC]));
-	      plz.unlock();
-	      dC++;
-	    }
-	  counter++;
-	}
-      i++;
-    }
-  fileR.close();
   cerr<<"handled "<<i<<" points";
 }
 
@@ -407,6 +343,7 @@ void readQueries(string filename, uint64_t numCores,KDTree * root,string rname,v
   numIters = numQueries/numCores;//how many we are going to do
   uint64_t offsetData = numIters*querySize;//4 is the size for each 32 bit in a points value, times the number of dimensions
   thread readers[numCores];
+  holdResults = new vector< vector<point> >[numCores];
   uint64_t numThreads = 0;
   if(debug == 0){
     printf("Using %lu threads, we assign each thread %lu points, leaving the last thread with %lu entries.\n",numCores,numIters, numQueries-numIters*(numCores-1));
@@ -424,8 +361,51 @@ void readQueries(string filename, uint64_t numCores,KDTree * root,string rname,v
     readers[numThreads].join();
     numThreads++;
   }
+  ofstream fileR(rname,ofstream::binary);
+  char name[8] = "RESULT";
+  fileR.write((char *) &name,sizeof(name));
+  fileR.write((char *) &inputID,sizeof(inputID));
+  fileR.write((char *) &queryID,sizeof(queryID));
+  fileR.write((char *) &ID,sizeof(ID));
+  fileR.write((char *) &numQueries,sizeof(numQueries));
+  fileR.write((char *) &numDimensions,sizeof(numDimensions));
+  fileR.write((char *) &kNum,sizeof(kNum));
+      //file looks good up to here
+      //fileR.close();
+      //readResults(rfilename);
+  uint64_t i = 0;
+  uint64_t j = 0;
+  uint64_t counter = 0;
+  uint64_t dC;
+  vector<point> knn;
+  while(i<numThreads)
+    {
+      j=0;
+      while(j<holdResults[i].size())
+      {
+        knn = holdResults[i][j];
+        counter=0;
+        while(counter<kNum)
+        {
+          dC=0;
+          while(dC<numDimensions)
+          {
+            char * temp = (char *)&knn[counter].values[dC];
+
+            fileR.write(temp,sizeof(knn[counter].values[dC]));
+
+            dC++;
+          }
+          counter++;
+        }
+        j++;
+      }
+      i++;
+    }
+  fileR.close();
   //writeBinary("yuh");
   readResults(rname);
+  delete[] holdResults;
   /*vector<point> points;
   while(!file.eof())
   {
