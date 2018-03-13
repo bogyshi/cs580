@@ -9,7 +9,7 @@ using namespace std;
 random_device rd;
 mt19937 gen(rd());
 static uniform_int_distribution<uint64_t> dist(0,ULLONG_MAX);
-static const uint64_t THRESH = 50;
+static const uint64_t THRESH = 20;
 static uint64_t availableThreads; //locked by mutex mx
 static uint64_t workAvailable; //locked by mutex mx
 static queue< pair<KDTree *, vector<point>>> workingQueue; // locked by mutex mx
