@@ -173,13 +173,14 @@ vector< pair<float,int>> getMinPoints(vector<point> og,point * query)
   return SI;
 }
 
+/**
 vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,point  * query)
 {
   vector<point> newCurrPoints;
-  if(node->allPoints[0].values[DS]<query->values[DS] && node->right !=NULL)// can and should I go to the right
+  if(node->allPoints[0].values[DS]<query->values[DS] && node->right.get() !=NULL)// can and should I go to the right
   {
     newCurrPoints = recursiveKNN(node->right.get(),(DS+1)%numDimensions,currPoints,query); // go right
-    if(newCurrPoints.size()<kNum && node->left!=NULL)//we havent found enough neighbors yet! go down the other branch
+    if(newCurrPoints.size()<kNum && node->left.get()!=NULL)//we havent found enough neighbors yet! go down the other branch
     {
       newCurrPoints = recursiveKNN(node->left.get(),(DS+1)%numDimensions,newCurrPoints,query);
     }
@@ -187,7 +188,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
     {
       if(query->values[DS] - node->allPoints[0].values[DS] < calcDist(query,&newCurrPoints[newCurrPoints.size()-1]))//distance means there could be a point closer on the other side!
       {
-        if(node->left!=NULL)//can we go to the left though?
+        if(node->left.get()!=NULL)//can we go to the left though?
         {
           newCurrPoints = recursiveKNN(node->left.get(),(DS+1)%numDimensions,newCurrPoints,query);
         }
@@ -208,10 +209,10 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       newCurrPoints.pop_back();
     }
   }
-  else if(node->allPoints[0].values[DS]>query->values[DS] && node->left !=NULL) // do we go left and can we?
+  else if(node->allPoints[0].values[DS]>query->values[DS] && node->left.get() !=NULL) // do we go left and can we?
   {
     newCurrPoints = recursiveKNN(node->left.get(),(DS+1)%numDimensions,currPoints,query); // go left
-    if(newCurrPoints.size()<kNum && node->right!=NULL) // we need more points! so go right if possible
+    if(newCurrPoints.size()<kNum && node->right.get()!=NULL) // we need more points! so go right if possible
     {
       newCurrPoints = recursiveKNN(node->right.get(),(DS+1)%numDimensions,newCurrPoints,query);
     }
@@ -219,7 +220,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
     {
       if(query->values[DS] - node->allPoints[0].values[DS] < calcDist(query,&newCurrPoints[newCurrPoints.size()-1]))//distance means there could be a point closer on the other side!
       {
-        if(node->right!=NULL)
+        if(node->right.get()!=NULL)
         {
           newCurrPoints = recursiveKNN(node->right.get(),(DS+1)%numDimensions,newCurrPoints,query);
         }
@@ -240,7 +241,7 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
       newCurrPoints.pop_back();
     }
   }
-  else if(node->left==NULL && node->right == NULL) // we are at a leaf node!
+  else if(node->left.get()==NULL && node->right.get() == NULL) // we are at a leaf node!
   {
     uint64_t i =0;
     int sz= node->allPoints.size();
@@ -298,11 +299,149 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
   }
   else
   {
+    cerr<<"how?"<<endl;
+    cerr<<node;
+    cerr<<node->left.get();
+    cerr<<node->right.get();
     return currPoints;
   }
   return newCurrPoints;
 
+}*/
+
+
+
+
+
+
+
+
+
+vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,point  * query)
+{
+  vector<point> newCurrPoints;
+  KDTree * firstPath;
+  KDTree * otherPath;
+  if(!(node->right) && !(node->left))
+    {
+      uint64_t i =0;
+      int sz= node->allPoints.size();
+      int sz2;
+      vector< pair<float,int>> minPoints = getMinPoints(node->allPoints,query);
+      if(currPoints.size()==0) // no points yet! lets get some
+	{
+	  while(currPoints.size()<=kNum && i < node->allPoints.size())
+	    {
+	      //cerr<<"beg"<<minPoints[i].second<<"end"<<endl;
+	      newCurrPoints.push_back(move(node->allPoints[minPoints[i].second]));
+	      ++i;
+	    }
+	}
+      else//handles the case where we havent satisfied kNN and have some already.
+	{
+	  sz2=currPoints.size();
+	  int x=0;
+	  int y=0;
+	  while(x<sz && y<sz2 && newCurrPoints.size()<kNum)
+	    {
+	      if(minPoints[x].first<calcDist(query,&currPoints[y]) )
+		{
+		  newCurrPoints.push_back(move(node->allPoints[minPoints[x].second]));
+		  ++x;
+		}
+	      else
+		{
+		  newCurrPoints.push_back(move(currPoints[y]));
+		  ++y;
+		}
+	    }
+	  if(newCurrPoints.size()==kNum)
+	    {
+	      
+	    }
+	  else if(x==sz && y<sz2)
+	    {
+	      while(y<sz2 && newCurrPoints.size()<kNum)
+		{
+		  newCurrPoints.push_back(move(currPoints[y]));
+		  ++y;
+		}
+	    }
+	  else if(y==sz2 && x<sz)
+	    {
+	      while(x<sz && newCurrPoints.size()<kNum)
+		{
+		  newCurrPoints.push_back(move(node->allPoints[minPoints[x].second]));
+		  ++x;
+		}
+	    }
+	}
+    }
+  else if(node->right && node->left)
+    {// this means they are BOTH not null
+      if(node->allPoints[0].values[DS]<query->values[DS])
+	{
+	  firstPath = node->right.get();
+	  otherPath = node->left.get();	  	  
+	}
+      else
+	{
+	  firstPath = node->left.get();
+	  otherPath = node->right.get();
+	}
+      newCurrPoints = recursiveKNN(firstPath,(DS+1)%numDimensions,currPoints,query);
+      if(newCurrPoints.size()<kNum)//we havent found enough neighbors yet! go down the other branch
+	{
+	  newCurrPoints = recursiveKNN(otherPath,(DS+1)%numDimensions,newCurrPoints,query);
+	}
+      else // check difference between splitDimension points, we have enough neighboors, but maybe there is more to go
+	{
+	  if(query->values[DS] - node->allPoints[0].values[DS] < calcDist(query,&newCurrPoints[newCurrPoints.size()-1]))//distance means there could be a point closer on the other side!
+	    {
+	      newCurrPoints = recursiveKNN(otherPath,(DS+1)%numDimensions,newCurrPoints,query);
+	    }
+	}
+      if(calcDist(query,&node->allPoints[0]) < calcDist(query,&newCurrPoints[newCurrPoints.size()-1])) //see if the point here is can replace whatever is already in the list
+	{
+	  uint64_t i = 0;
+	  while(i<newCurrPoints.size())
+	    {
+	      if(calcDist(query,&node->allPoints[0]) < calcDist(query,&newCurrPoints[i]))
+		{
+		  newCurrPoints.insert(newCurrPoints.begin()+i,move(node->allPoints[0])); // this will always happen
+		  break;
+		}
+	      ++i;
+	    }
+	  newCurrPoints.pop_back();
+	}
+    }
+  else
+    {
+      cerr<<"how?"<<endl;
+      cerr<<node;
+      cerr<<node->left.get();
+      cerr<<node->right.get();
+      return currPoints;
+    }
+  return newCurrPoints;
+  
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void readQueries(string filename, uint64_t numCores,KDTree * root,string rname,vector<point> allPoints)
 {
   //below code on getting random value was taken from https://stackoverflow.com/questions/35726331/c-extracting-random-numbers-from-dev-urandom

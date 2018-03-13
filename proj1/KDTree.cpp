@@ -197,6 +197,10 @@ void completeTree(uint64_t numDim)
         workingQueue.push(pair<KDTree *, vector<point>>(head->left.get(),leftPoints));
         workAvailable+=1;
       }
+      else
+	{
+	  cerr<<"this should not happen";
+	}
       if(rightPoints.size()>0)
       {
         head->right = make_unique<KDTree>(((head->splitDim)+1)%numDim);
@@ -204,6 +208,10 @@ void completeTree(uint64_t numDim)
         workingQueue.push(pair<KDTree *, vector<point>>(head->right.get(),rightPoints));
         workAvailable+=1;
       }
+      else
+	{
+	  cerr<<"this should not happen";
+	}
 
       availableThreads++;
       workToDo.notify_all();
@@ -299,7 +307,7 @@ void testKNN(std::vector<point> allPoints, point * query, uint64_t kNN)
       counter++;
     }
   counter = 0;
-  printf("\nBEGIN BRUTEFORCECALC\n");
+
   while(counter<minPoints.size())
     {
       printf("%f,%f with dist %f\n",minPoints[counter].values[0],minPoints[counter].values[1],calcDist(query,&minPoints[counter]));
