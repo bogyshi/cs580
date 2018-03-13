@@ -298,7 +298,6 @@ vector<point> recursiveKNN(KDTree * node, uint64_t DS, vector<point> currPoints,
   }
   else
   {
-    cerr<<"makes sense";
     return currPoints;
   }
   return newCurrPoints;
